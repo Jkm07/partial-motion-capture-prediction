@@ -27,6 +27,6 @@ class VAE(nn.Module):
         return self.decoder(x)
     
 def vae_loss(recon_x, x, mu, logvar):
-    BCE = F.binary_cross_entropy_with_logits(recon_x, x, reduction='sum')
+    BCE = F.mse_loss(recon_x, x, reduction='sum')
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
     return BCE + KLD
