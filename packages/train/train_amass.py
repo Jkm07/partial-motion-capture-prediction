@@ -48,7 +48,7 @@ def run(arguments):
             optimizer.step()
 
             batch_losses.append(float(loss))
-            if i % 1000 == 0:
+            if i % 100 == 0:
                 print(f'Loss {float(loss)}')
 
         valid_test, shouldStop = validation(vae, test_service_instance, epoch, arguments)
