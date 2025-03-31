@@ -49,6 +49,7 @@ def run(arguments):
 
             batch_losses.append(float(loss))
             if i % 100 == 0:
+                wandb_utils.log_train_loss_mid_epoch(float(loss))
                 print(f'Loss {float(loss)}')
 
         valid_test, shouldStop = validation(vae, test_service_instance, epoch, arguments)
