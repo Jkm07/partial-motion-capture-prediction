@@ -11,10 +11,10 @@ class TestService:
         self.test_history = []
 
     def run_test(self):
-        self.model.eval()
         mse_list = []
         mase_list = []
         with torch.no_grad():
+            self.model.eval()
             for data in self.dataloader:
                 output, _, _ = self.model(data)
                 mse_list.append(nn.MSELoss()(output, data).cpu().numpy())
@@ -23,7 +23,6 @@ class TestService:
                     y_pred = output[batch_idx].cpu().numpy().reshape((output.size()[1], -1))
                     y_train = np.zeros_like(y_true[:2])
                     mase_list.append(mean_absolute_scaled_error(y_true, y_pred, y_train = y_train))
-        self.model.train()
 
         test_item = {"mse": np.mean(mse_list), "mase": np.mean(mase_list)}
 
