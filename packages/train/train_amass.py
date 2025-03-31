@@ -30,13 +30,13 @@ def run(arguments):
     valid_data = get_amass_dataloader(arguments.valid_dir, arguments.valid_batch_size)
     #test_data = get_amass_dataloader(arguments.test_dir, arguments.test_batch_size)
 
-    #wandb_utils.init(arguments, vae)
+    wandb_utils.init(arguments, vae)
 
     test_service_instance = test_service.TestService(vae, valid_data)
 
     for epoch in range(arguments.epoch):
         batch_losses = []
-        for batch in train_data:
+        for i, batch in enumerate(train_data):
             dropout_batch, disable_joint_indexes = joint_utils.input_dropout(batch)
 
             optimizer.zero_grad()
@@ -47,8 +47,9 @@ def run(arguments):
             loss.backward()
             optimizer.step()
 
-            print(f'Loss {float(loss)}')
             batch_losses.append(float(loss))
+            if i % 1000 == 0:
+                print(f'Loss {float(loss)}')
 
         valid_test, shouldStop = validation(vae, test_service_instance, epoch, arguments)
         wandb_utils.log(epoch, batch_losses, valid_test['mse'], valid_test['mase'])
