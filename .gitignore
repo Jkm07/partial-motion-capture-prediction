@@ -1,0 +1,8 @@
+.venv/
+checkpoints/
+datasets/amass/
+datasets/amass_bvh/
+datasets/amass_test/
+datasets/smpl/
+wandb/
+**/__pycache__/
