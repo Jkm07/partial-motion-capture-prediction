@@ -12,7 +12,7 @@ def init(arguments, model):
     watch_model(model)
     
 def watch_model(model):
-    wandb.watch(model, nn.MSELoss(), log="all", log_freq=100)
+    wandb.watch(model, nn.MSELoss(), log="all", log_freq=10000)
 
 def unwatch(model):
     wandb.unwatch(model)
