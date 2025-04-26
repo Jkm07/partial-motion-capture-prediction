@@ -43,14 +43,14 @@ def run(arguments):
             vae.train()
             recon_batch, mu, logvar = vae(dropout_batch)
 
-            loss = vae_loss(recon_batch, batch, mu, logvar)
+            loss, detail = vae_loss(recon_batch, batch, mu, logvar)
             loss.backward()
             optimizer.step()
 
             batch_losses.append(float(loss))
             if i % 100 == 0:
-                wandb_utils.log_train_loss_mid_epoch(float(loss))
-                print(f'Loss {float(loss)}')
+                wandb_utils.log_train_loss_mid_epoch(float(loss), detail)
+                print(f'Loss {float(loss)}. ROT: {detail[0]} POS: {detail[1]} KLD: {detail[2]}')
 
         valid_test, shouldStop = validation(vae, test_service_instance, epoch, arguments)
         wandb_utils.log(epoch, batch_losses, valid_test['mse'], valid_test['mase'])

@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 def to_angle(rotation_matrix):
     x = rotation_matrix[..., 2, 1] - rotation_matrix[..., 1, 2]
@@ -57,3 +58,28 @@ def differ_rotation_matrix_series(rotation_matrix):
 
 def matrix9D_to_6D(mat):
     return mat[..., :-1].reshape(*mat.shape[:-2], -1)
+
+def batch_vector_dot_torch(vec1, vec2):
+    dot = torch.matmul(vec1[..., None, :], vec2[..., None])
+    return dot.squeeze(-1)
+
+def normalize_torch(tensor, dim=-1, eps=1e-5):
+    return torch.nn.functional.normalize(tensor, p=2, dim=dim, eps=eps)
+
+def matrix6D_to_9D_torch(mat):
+    if mat.shape[-1] != 6:
+        raise ValueError(
+            "Last two dimension should be 6, got {0}.".format(mat.shape[-1]))
+
+    mat = mat.reshape(*mat.shape[:-1], 3, 2)
+
+    col0 = normalize_torch(mat[..., 0], dim=-1)
+
+    dot_prod = batch_vector_dot_torch(col0, mat[..., 1])
+    col1 = normalize_torch(mat[..., 1] - dot_prod * col0, dim=-1)
+
+    col0 = col0.unsqueeze(-1)
+    col1 = col1.unsqueeze(-1)
+
+    col2 = torch.cross(col0, col1, dim=-2)
+    return torch.cat([col0, col1, col2], dim=-1)
