@@ -32,6 +32,6 @@ def log_train_loss_mid_epoch(loss: float, detail):
     wandb.log({
         'loss_mid_epoch': loss,
         'loss_rotation_mid_epoch': BCE_ROT,
-        'loss_rotation_mid_epoch': BCE_POS,
-        'loss_rotation_mid_epoch': KLD,
+        'loss_position_mid_epoch': BCE_POS,
+        'loss_kld_mid_epoch': KLD,
     })
