@@ -72,7 +72,7 @@ append_node(smplh_hierarchy, 'spine1')
 
 print(len(SMPLH_JOINT_NAMES))
 
-x = np.load("filename.npz")
+x = np.load("data/filename.npz")
 
 print(x.files)
 
@@ -95,12 +95,10 @@ poses = np.rad2deg(poses)
 
 motion_array= np.concatenate((x['trans'], poses), axis=1)
 
-
-
 print(motion_array.shape)
 
-with open('amass_hierarchy') as f:
+with open('data/amass_hierarchy') as f:
     joints = get_hierarchy(f)
     motion_array =  MotionArray(x['poses'].shape[0], x['mocap_framerate'], motion_array)
     bvh = Bvh(joints, motion_array)
-    save_bvh_to_file(bvh, "amass_zapis.bvh")
+    save_bvh_to_file(bvh, "data/amass_zapis2.bvh")

@@ -66,7 +66,7 @@ def batch_vector_dot_torch(vec1, vec2):
 def normalize_torch(tensor, dim=-1, eps=1e-5):
     return torch.nn.functional.normalize(tensor, p=2, dim=dim, eps=eps)
 
-def matrix6D_to_9D_torch(mat):
+def matrix6D_to_9D_torch(mat: torch.Tensor) -> torch.Tensor:
     if mat.shape[-1] != 6:
         raise ValueError(
             "Last two dimension should be 6, got {0}.".format(mat.shape[-1]))
@@ -83,3 +83,79 @@ def matrix6D_to_9D_torch(mat):
 
     col2 = torch.cross(col0, col1, dim=-2)
     return torch.cat([col0, col1, col2], dim=-1)
+
+
+def _sqrt_positive_part(x):
+    ret = torch.zeros_like(x)
+    positive_mask = x > 0
+    ret[positive_mask] = torch.sqrt(x[positive_mask])
+    return ret
+
+def _copysign(a, b):
+    signs_differ = (a < 0) != (b < 0)
+    return torch.where(signs_differ, -a, a)
+
+def matrix9D_to_quat_torch(mat: torch.Tensor) -> torch.Tensor:
+    if mat.size(-1) != 3 or mat.size(-2) != 3:
+        raise ValueError(f"Invalid rotation matrix  shape f{mat.shape}.")
+    m00 = mat[..., 0, 0]
+    m11 = mat[..., 1, 1]
+    m22 = mat[..., 2, 2]
+    o0 = 0.5 * _sqrt_positive_part(1 + m00 + m11 + m22)
+    x = 0.5 * _sqrt_positive_part(1 + m00 - m11 - m22)
+    y = 0.5 * _sqrt_positive_part(1 - m00 + m11 - m22)
+    z = 0.5 * _sqrt_positive_part(1 - m00 - m11 + m22)
+    o1 = _copysign(x, mat[..., 2, 1] - mat[..., 1, 2])
+    o2 = _copysign(y, mat[..., 0, 2] - mat[..., 2, 0])
+    o3 = _copysign(z, mat[..., 1, 0] - mat[..., 0, 1])
+    return torch.stack((o0, o1, o2, o3), -1)
+
+def undo_differ_rotation_matrix_torch(mat: torch.Tensor) -> torch.Tensor:
+    mat = torch.clone(mat)
+    for i in range(1, mat.shape[-3]):
+        mat[..., i, :, :] = mat[..., i - 1, :, :] @ mat[..., i, :, :]
+
+    return mat
+
+def get_quat_from_matrix(mat: torch.Tensor) -> torch.Tensor:
+    mat = matrix6D_to_9D_torch(mat)
+    mat = undo_differ_rotation_matrix_torch(mat)
+    return matrix9D_to_quat_torch(mat)
+
+def rotation_matrix_to_euler_torch(rot_mats: torch.Tensor) -> torch.Tensor:
+    assert rot_mats.shape[-2:] == (3, 3), f"Input must be of shape (..., 3, 3), got {rot_mats.shape}"
+    
+    eulers = torch.zeros(rot_mats.shape[:-2] + (3,), device=rot_mats.device, dtype=rot_mats.dtype)
+    
+    pitch = torch.asin(-rot_mats[..., 2, 0])
+    
+    normal_case = torch.abs(rot_mats[..., 2, 0]) < 0.9999
+    gimbal_lock_case = ~normal_case
+    
+    if torch.any(normal_case):
+        eulers[..., 0][normal_case] = torch.atan2(
+            rot_mats[..., 1, 0][normal_case], 
+            rot_mats[..., 0, 0][normal_case]
+        )
+        
+        eulers[..., 2][normal_case] = torch.atan2(
+            rot_mats[..., 2, 1][normal_case], 
+            rot_mats[..., 2, 2][normal_case]
+        )
+    
+    if torch.any(gimbal_lock_case):
+        eulers[..., 0][gimbal_lock_case] = torch.atan2(
+            -rot_mats[..., 1, 2][gimbal_lock_case],
+            rot_mats[..., 1, 1][gimbal_lock_case]
+        )
+        
+        eulers[..., 2][gimbal_lock_case] = 0.0
+    
+    eulers[..., 1] = pitch
+    
+    return eulers
+
+def get_euler_from_matrix(mat: torch.Tensor) -> torch.Tensor:
+    mat = matrix6D_to_9D_torch(mat)
+    mat = undo_differ_rotation_matrix_torch(mat)
+    return rotation_matrix_to_euler_torch(mat)

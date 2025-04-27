@@ -36,6 +36,6 @@ def vae_loss(actual, expected, mu, logvar):
 def rot_lost(actual, expected):
     actual = matrix6D_to_9D_torch(actual[..., :-1, :])
     expected = matrix6D_to_9D_torch(expected[..., :-1, :]).transpose(-1, -2)
-    ones = torch.eye(3).expand(*expected.shape)
+    ones = torch.eye(3).expand(*expected.shape).to('cuda')
 
     return F.mse_loss(ones, torch.matmul(actual, expected), reduction='sum')

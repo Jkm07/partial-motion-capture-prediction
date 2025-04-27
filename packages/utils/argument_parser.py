@@ -8,16 +8,18 @@ def get_train_arguments():
     parser.add_argument("--no_improvment_stop", type=int, default=3)
 
     parser.add_argument("--train_dir", type=str, default="datasets/amass/run_test_one_sub")
-    parser.add_argument("--valid_dir", type=str, default="datasets/amass/run_test")
-    parser.add_argument("--test_dir", type=str, default="datasets/amass/run_test")
+    parser.add_argument("--valid_dir", type=str, default="datasets/amass/run_test_one_sub")
+    parser.add_argument("--test_dir", type=str, default="datasets/amass/run_test_one_sub")
     parser.add_argument("--checkpoint_dir", type=str, default="checkpoints/")
 
     parser.add_argument("--train_batch_size", type=int, default=32)
     parser.add_argument("--valid_batch_size", type=int, default=32)
     parser.add_argument("--test_batch_size", type=int, default=32)
 
-    parser.add_argument("--latent_dim", type=int, default=2024)
+    parser.add_argument("--latent_dim", type=int, default=256)
     parser.add_argument("--learning_rate", type=float, default=1e-3)
     parser.add_argument("--sequence_length", type=int, default=60)
+
+    parser.add_argument("--model_path", type=str, default="checkpoints/model_epoch_6_loss_0.36442808391066556_date_2025-04-27-20-35-19-868782_mase_0.3029220327950702")
 
     return parser.parse_args()

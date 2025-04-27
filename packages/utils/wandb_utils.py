@@ -17,13 +17,14 @@ def watch_model(model):
 def unwatch(model):
     wandb.unwatch(model)
 
-def log(epoch, train_loss_list, mse, mase):
+def log(epoch, train_loss_list, mse, pos_l2, rot_l2q):
     train_loss = np.mean(train_loss_list)
     wandb.log({
         'epoch': epoch,
         'train_loss': train_loss,
         'val_mse': mse,
-        'val_mase': mase,
+        'val_position_l2': pos_l2,
+        'val_rotation_l2': rot_l2q,
     })
 
 def log_train_loss_mid_epoch(loss: float, detail):

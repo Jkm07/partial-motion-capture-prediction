@@ -5,4 +5,5 @@ datasets/amass_bvh/
 datasets/amass_test/
 datasets/smpl/
 wandb/
+results/
 **/__pycache__/
