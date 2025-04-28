@@ -33,9 +33,9 @@ class TestService:
     def run_test_for_given_data(self, actual, expected, disable_joints = []):
         mse = 0
         if disable_joints:
-            mse = nn.MSELoss()(actual[..., disable_joints, :], expected[..., disable_joints, :])
+            mse = nn.MSELoss()(actual[..., disable_joints, :], expected[..., disable_joints, :]).cpu().numpy()
         else:
-            mse = nn.MSELoss()(actual, expected)
+            mse = nn.MSELoss()(actual, expected).cpu().numpy()
         poss_loss, rot_loss = self.get_l2q(actual, expected, disable_joints)
         return mse, poss_loss, rot_loss
     
@@ -49,7 +49,7 @@ class TestService:
     def get_l2q(self, actual, expected, disable_joints: list):
         actual_pos = torch.cumsum(actual[..., -1, :3], dim=-3)
         expected_pos = torch.cumsum(expected[..., -1, :3], dim=-3)
-        poss_loss = nn.MSELoss()(actual_pos, expected_pos) if actual.shape[-2] -1 not in disable_joints else 0
+        poss_loss = nn.MSELoss()(actual_pos, expected_pos).cpu().numpy() if actual.shape[-2] -1 not in disable_joints else 0
 
         return poss_loss, self.get_rot_loss(actual, expected, disable_joints)
     
@@ -57,4 +57,4 @@ class TestService:
         disable_joints = [i for i in disable_joints if i != actual.shape[-2] -1]
         actual_rot_quat = math_utils.get_quat_from_matrix(actual[..., :-1, :][..., disable_joints, :] if disable_joints else actual[..., :-1, :])
         expected_rot_quat = math_utils.get_quat_from_matrix(expected[..., :-1, :][..., disable_joints, :] if disable_joints else expected[..., :-1, :])
-        return nn.MSELoss()(actual_rot_quat, expected_rot_quat)
+        return nn.MSELoss()(actual_rot_quat, expected_rot_quat).cpu().numpy()
