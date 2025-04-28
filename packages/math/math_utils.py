@@ -112,8 +112,8 @@ def matrix9D_to_quat_torch(mat: torch.Tensor) -> torch.Tensor:
 
 def undo_differ_rotation_matrix_torch(mat: torch.Tensor) -> torch.Tensor:
     mat = torch.clone(mat)
-    for i in range(1, mat.shape[-3]):
-        mat[..., i, :, :] = mat[..., i - 1, :, :] @ mat[..., i, :, :]
+    for i in range(1, mat.shape[-4]):
+        mat[..., i, :, :, :] = mat[..., i - 1, :, :, :] @ mat[..., i, :, :, :]
 
     return mat
 
