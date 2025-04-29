@@ -71,6 +71,7 @@ class AmassDataloader(Dataset):
         
     def get_prepared_rotation_matrix(self, rotation):
         rotation = rotation.reshape((-1, 52, 3))
+        rotation = self.permute_to_bvh_format(rotation)
         rotation_matrix = math_utils.to_rotation_matrix(rotation)
         rotation_matrix =  math_utils.differ_rotation_matrix_series(rotation_matrix)
         rotation_matrix = math_utils.matrix9D_to_6D(rotation_matrix)
@@ -81,4 +82,8 @@ class AmassDataloader(Dataset):
         out = np.tile(out, 2)
         out = np.expand_dims(out, axis=-2)
         return out
+    
+    def permute_to_bvh_format(self, rotation):
+        perm = [0, 1, 4, 7, 10, 2, 5, 8, 11, 3, 6, 9, 12, 15, 13, 16, 18, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 14, 17, 19, 21] + list(range(37, 52))
+        return rotation[..., perm, :]
     
