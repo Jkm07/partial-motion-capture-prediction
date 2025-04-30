@@ -40,12 +40,12 @@ class TestService:
         poss_loss, l2q = self.get_l2q(actual, expected, disable_joints)
         return ROT_LOSS, poss_loss, l2q
     
-    def get_idx_of_last_best_result(self, metric = 'rot_loss') -> int:
-        array_metric = np.array([m[metric] for m in self.test_history])
+    def get_idx_of_last_best_result(self, metric = 'rot_loss', skip_epoch = 1) -> int:
+        array_metric = np.array([m[metric] for m in self.test_history])[::skip_epoch]
         return np.argmin(array_metric)
     
-    def is_last_test_improve_result(self, metric = 'rot_loss') -> bool:
-        return self.get_idx_of_last_best_result(metric) == len(self.test_history) - 1
+    def is_last_test_improve_result(self, metric = 'rot_loss', skip_epoch = 1) -> bool:
+        return self.get_idx_of_last_best_result(metric, skip_epoch) == len(self.test_history[::skip_epoch]) - 1
     
     def get_l2q(self, actual, expected, disable_joints: list):
         actual_pos = torch.cumsum(actual[..., -1, :3], dim=-3)

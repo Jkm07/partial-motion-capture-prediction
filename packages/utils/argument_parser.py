@@ -6,6 +6,7 @@ def get_train_arguments():
 
     parser.add_argument("--epoch", type=int, default=200)
     parser.add_argument("--no_improvment_stop", type=int, default=3)
+    parser.add_argument("--save_epoch_skip", type=int, default=1)
 
     parser.add_argument("--train_dir", type=str, default="datasets/amass/run_test_one_sub")
     parser.add_argument("--valid_dir", type=str, default="datasets/amass/run_test_one_sub")
