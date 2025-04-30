@@ -1,5 +1,6 @@
 from packages.dataloader.dataloader_utils import get_amass_dataloader
-from packages.model.varational_autoencoder import VAE, vae_loss
+from packages.model.varational_autoencoder import VAE
+from packages.model.loss import vae_loss
 from packages.utils.bvh import get_hierarchy
 from packages.utils import joint_utils
 from packages.utils import wandb_utils
@@ -53,7 +54,7 @@ def run(arguments):
                 print(f'Loss {float(loss)}. ROT: {detail[0]} POS: {detail[1]} KLD: {detail[2]}')
 
         valid_test, shouldStop = validation(vae, test_service_instance, epoch, arguments)
-        wandb_utils.log(epoch, batch_losses, valid_test['mse'], valid_test['poss_l2_loss'], valid_test['rot_l2q_loss'])
+        wandb_utils.log(epoch, batch_losses, valid_test['rot_loss'], valid_test['poss_l2_loss'], valid_test['rot_l2q_loss'])
         
         if shouldStop:
             break
@@ -64,7 +65,7 @@ def validation(model: torch.nn.Module, test_service_instance: test_service.TestS
 
     if(test_service_instance.is_last_test_improve_result()):
         print(f"Save {epoch} epoch model as best result - {valid_test}")
-        save_model(model, epoch, valid_test['mse'], valid_test['rot_l2q_loss'], arguments)
+        save_model(model, epoch, valid_test['rot_loss'], valid_test['rot_l2q_loss'], arguments)
 
     if(epoch - test_service_instance.get_idx_of_last_best_result() > arguments.no_improvment_stop):
         print(f"Stop on {epoch} becouse lack of improvment through last {arguments.no_improvment_stop} epochs")
@@ -74,7 +75,7 @@ def validation(model: torch.nn.Module, test_service_instance: test_service.TestS
 
 def save_model(model: torch.nn.Module, epoch, loss, l2q, arguments):
     date = str(datetime.datetime.now()).replace(' ', '-').replace(':', '-').replace('.', '-')
-    path = os.path.join(arguments.checkpoint_dir, f'model_epoch_{epoch}_loss_{loss}_date_{date}_mase_{float(l2q)}')
+    path = os.path.join(arguments.checkpoint_dir, f'model_epoch_{epoch}_rot-loss_{loss}_date_{date}_l2q_{float(l2q)}')
     wandb_utils.unwatch(model)
     torch.save(model.state_dict(), path)
     wandb_utils.watch_model(model)

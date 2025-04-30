@@ -4,6 +4,7 @@ import torch
 import numpy as np
 from packages.math import math_utils
 from packages.utils import joint_utils
+from packages.model.loss import rot_loss 
 
 class TestService:
     def __init__(self, model: nn.Module, dataloader: torch.utils.data.DataLoader):
@@ -12,7 +13,7 @@ class TestService:
         self.test_history = []
 
     def run_test(self, disable_joints = []):
-        mse_list = []
+        loss_list = []
         poss_loss_list = []
         rot_loss_list = []
         with torch.no_grad():
@@ -20,30 +21,30 @@ class TestService:
             for data in self.dataloader:
                 output, _, _ = self.model(joint_utils.get_data_disable_joint(data, disable_joints) if disable_joints else data)
 
-                mse, poss_loss, rot_loss = self.run_test_for_given_data(output, data, disable_joints)
-                mse_list.append(mse)
+                loss, poss_loss, rot_loss = self.run_test_for_given_data(output, data, disable_joints)
+                loss_list.append(loss)
                 poss_loss_list.append(poss_loss)
                 rot_loss_list.append(rot_loss)
 
-        test_item = {"mse": np.mean(mse_list), "poss_l2_loss": np.mean(poss_loss_list), "rot_l2q_loss": np.mean(rot_loss_list)}
+        test_item = {"rot_loss": np.mean(loss_list), "poss_l2_loss": np.mean(poss_loss_list), "rot_l2q_loss": np.mean(rot_loss_list)}
 
         self.test_history.append(test_item)
         return test_item
     
     def run_test_for_given_data(self, actual, expected, disable_joints = []):
-        mse = 0
+        ROT_LOSS = 0
         if disable_joints:
-            mse = nn.MSELoss()(actual[..., disable_joints, :], expected[..., disable_joints, :]).cpu().numpy()
+            ROT_LOSS = rot_loss(actual[..., disable_joints, :], expected[..., disable_joints, :]).cpu().numpy()
         else:
-            mse = nn.MSELoss()(actual, expected).cpu().numpy()
-        poss_loss, rot_loss = self.get_l2q(actual, expected, disable_joints)
-        return mse, poss_loss, rot_loss
+            ROT_LOSS = rot_loss(actual, expected).cpu().numpy()
+        poss_loss, l2q = self.get_l2q(actual, expected, disable_joints)
+        return ROT_LOSS, poss_loss, l2q
     
-    def get_idx_of_last_best_result(self, metric = 'mse') -> int:
+    def get_idx_of_last_best_result(self, metric = 'rot_loss') -> int:
         array_metric = np.array([m[metric] for m in self.test_history])
         return np.argmin(array_metric)
     
-    def is_last_test_improve_result(self, metric = 'mse') -> bool:
+    def is_last_test_improve_result(self, metric = 'rot_loss') -> bool:
         return self.get_idx_of_last_best_result(metric) == len(self.test_history) - 1
     
     def get_l2q(self, actual, expected, disable_joints: list):
