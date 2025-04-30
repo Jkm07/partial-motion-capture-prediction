@@ -4,9 +4,9 @@ import torch.nn.functional as F
 
 from .STGCN import STGCN
 
-class ResidualBlock(nn.Module):
+class ResNet(nn.Module):
     def __init__(self, in_channels, out_channels, adjacency_list, stride=1, kernel_size=3, is_transpose=False, with_relu=True):
-        super(ResidualBlock, self).__init__()
+        super(ResNet, self).__init__()
         self.with_relu = with_relu
         self.conv1 = STGCN(in_channels, out_channels, adjacency_list, stride, is_transpose= is_transpose, kernel_size = kernel_size)
         self.bn1 = nn.BatchNorm1d(len(adjacency_list) * out_channels)
