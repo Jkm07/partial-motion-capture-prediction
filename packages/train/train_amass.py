@@ -70,7 +70,7 @@ def validation(model: torch.nn.Module, test_service_instance: test_service.TestS
         print(f"Save {epoch} epoch model as best result - {valid_test}")
         save_model(model, epoch, valid_test['rot_loss'], valid_test['rot_l2q_loss'], arguments)
 
-    if(epoch - test_service_instance.get_idx_of_last_best_result(skip_epoch=arguments.save_epoch_skip) > arguments.no_improvment_stop):
+    if(epoch // arguments.save_epoch_skip - test_service_instance.get_idx_of_last_best_result(skip_epoch=arguments.save_epoch_skip) > arguments.no_improvment_stop):
         print(f"Stop on {epoch} becouse lack of improvment through last {arguments.no_improvment_stop} epochs")
         return valid_test, True
     
