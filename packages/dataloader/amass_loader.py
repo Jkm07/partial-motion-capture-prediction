@@ -77,6 +77,7 @@ class AmassDataloader(Dataset):
         return rotation_matrix
     
     def get_prepared_position_matrix(self, position):
+        out = self.normalize_position(position)
         out = np.tile(position, 2)
         out = np.expand_dims(out, axis=-2)
         return out
@@ -88,4 +89,7 @@ class AmassDataloader(Dataset):
     def normalize_hips_rotation(self, rotation_matrix: np.array):
         rotation_matrix[..., 0, :, :] = rotation_matrix[..., 0, :, :] @ rotation_matrix[..., 0, 0, :, :].T
         return rotation_matrix
+    
+    def normalize_position(self, position):
+        return position - position[0]
     
