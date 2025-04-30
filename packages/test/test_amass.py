@@ -1,7 +1,7 @@
 from packages.dataloader.dataloader_utils import get_amass_dataloader
 from packages.bvhConverter.node import get_adjacency_list, add_position_node_to_adjacency_list
 from packages.utils.bvh import get_hierarchy
-from packages.model.varational_autoencoder import VAE
+from packages.model.VAE import VAE
 import torch
 from packages.test import test_service
 from packages.model.STGCN import RELATED_NODES

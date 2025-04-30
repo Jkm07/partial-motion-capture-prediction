@@ -1,5 +1,5 @@
 from packages.dataloader.dataloader_utils import get_amass_dataloader
-from packages.model.varational_autoencoder import VAE
+from packages.model.VAE import VAE
 from packages.model.loss import vae_loss
 from packages.utils.bvh import get_hierarchy
 from packages.utils import joint_utils
