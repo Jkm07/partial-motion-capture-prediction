@@ -58,9 +58,9 @@ RELATED_NODES = {
     52: 'Position'  
 }
 
-class RestrictedConvolutionalBlock(nn.Module):
+class STGCN(nn.Module):
     def __init__(self, single_in_channels, single_out_channels, adjacency_list, stride = 1, is_transpose = False, kernel_size = 3):
-        super(RestrictedConvolutionalBlock, self).__init__()
+        super(STGCN, self).__init__()
 
         self.adjacency_list = adjacency_list
 

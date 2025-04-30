@@ -4,7 +4,7 @@ from packages.utils.bvh import get_hierarchy
 from packages.model.varational_autoencoder import VAE
 import torch
 from packages.test import test_service
-from packages.model.restricted_convolutional_block import RELATED_NODES
+from packages.model.STGCN import RELATED_NODES
 from packages.math import math_utils
 from packages.bvhConverter import amass_service
 
