@@ -48,8 +48,8 @@ class TestService:
         return self.get_idx_of_last_best_result(metric, skip_epoch) == len(self.test_history[::skip_epoch]) - 1
     
     def get_l2q(self, actual, expected, disable_joints: list):
-        actual_pos = torch.cumsum(actual[..., -1, :3], dim=-3)
-        expected_pos = torch.cumsum(expected[..., -1, :3], dim=-3)
+        actual_pos = actual[..., -1, :3]
+        expected_pos = expected[..., -1, :3]
         poss_loss = nn.MSELoss()(actual_pos, expected_pos).cpu().numpy() if actual.shape[-2] -1 not in disable_joints else 0
 
         return poss_loss, self.get_rot_loss(actual, expected, disable_joints)

@@ -1,5 +1,4 @@
 import os
-import torch
 from torch.utils.data import Dataset
 import numpy as np
 from packages.math import math_utils
@@ -73,13 +72,11 @@ class AmassDataloader(Dataset):
         rotation = rotation.reshape((-1, 52, 3))
         rotation = self.permute_to_bvh_format(rotation)
         rotation_matrix = math_utils.to_rotation_matrix(rotation)
-        rotation_matrix =  math_utils.differ_rotation_matrix_series(rotation_matrix)
         rotation_matrix = math_utils.matrix9D_to_6D(rotation_matrix)
         return rotation_matrix
     
     def get_prepared_position_matrix(self, position):
-        out = np.concatenate([position[0][None], np.diff(position, axis=0)])
-        out = np.tile(out, 2)
+        out = np.tile(position, 2)
         out = np.expand_dims(out, axis=-2)
         return out
     

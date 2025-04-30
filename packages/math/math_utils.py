@@ -119,7 +119,6 @@ def undo_differ_rotation_matrix_torch(mat: torch.Tensor) -> torch.Tensor:
 
 def get_quat_from_matrix(mat: torch.Tensor) -> torch.Tensor:
     mat = matrix6D_to_9D_torch(mat)
-    mat = undo_differ_rotation_matrix_torch(mat)
     return matrix9D_to_quat_torch(mat)
 
 def rotation_matrix_to_euler_torch(rot_mats: torch.Tensor) -> torch.Tensor:
@@ -157,5 +156,4 @@ def rotation_matrix_to_euler_torch(rot_mats: torch.Tensor) -> torch.Tensor:
 
 def get_euler_from_matrix(mat: torch.Tensor) -> torch.Tensor:
     mat = matrix6D_to_9D_torch(mat)
-    mat = undo_differ_rotation_matrix_torch(mat)
     return rotation_matrix_to_euler_torch(mat)
