@@ -103,14 +103,15 @@ class STGCN(nn.Module):
     
     def forward(self, x):
         out = []
-        for i, adjacency_list_item in enumerate(self.adjacency_list):
-            sliced_tensor = x[..., adjacency_list_item, :]
-            B, T, N, C = sliced_tensor.size()
-            r = sliced_tensor.reshape(B * T, N * C)
-            r = self.convoltional_nodes[RELATED_NODES[i]](r)
-            r = r.view(B, T, -1).permute(0, 2, 1)
-            r = self.time_convolutions[RELATED_NODES[i]](r).permute(0, 2, 1).unsqueeze(2)
-            out.append(r)
+        for node_idx, adjacency_list_item in enumerate(self.adjacency_list):
+            out.append(self.forward_node(x[..., adjacency_list_item, :], node_idx))
         out = torch.cat(out, -2)
 
         return out
+    
+    def forward_node(self, x_neigbours, node_idx):
+        B, T, N, C = x_neigbours.size()
+        r = x_neigbours.reshape(B * T, N * C)
+        r = self.convoltional_nodes[RELATED_NODES[node_idx]](r)
+        r = r.view(B, T, -1).permute(0, 2, 1)
+        return self.time_convolutions[RELATED_NODES[node_idx]](r).permute(0, 2, 1).unsqueeze(2)

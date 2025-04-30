@@ -31,3 +31,11 @@ def add_position_node_to_adjacency_list(adjacency_list: list):
     adjacency_list.append([0, len(adjacency_list)])
     return adjacency_list
 
+def adjacency_list_to_edge_format(adjacency_list: list):
+    out =[[], []]
+    for source, target_neighbours in enumerate(adjacency_list):
+        for target in target_neighbours:
+            out[0].append(source)
+            out[1].append(target)
+    return out
+
