@@ -108,7 +108,7 @@ class STGCN(nn.Module):
             B, T, N, C = sliced_tensor.size()
             r = sliced_tensor.reshape(B * T, N * C)
             r = self.convoltional_nodes[RELATED_NODES[i]](r)
-            r = r.reshape(B, T, -1).permute(0, 2, 1)
+            r = r.view(B, T, -1).permute(0, 2, 1)
             r = self.time_convolutions[RELATED_NODES[i]](r).permute(0, 2, 1).unsqueeze(2)
             out.append(r)
         out = torch.cat(out, -2)
