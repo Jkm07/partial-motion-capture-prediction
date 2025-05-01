@@ -9,7 +9,7 @@ class Encoder(nn.Module):
 
         self.res_block1 = ResNet(in_channels, in_channels, adjacency_list, stride=2)
         self.res_block2 = ResNet(in_channels, in_channels * 2, adjacency_list, stride=2)
-        self.res_block3 = ResNet(in_channels * 2, in_channels * 4, adjacency_list, stride=3)
+        self.res_block3 = ResNet(in_channels * 2, in_channels * 4, adjacency_list, stride=2)
 
         flat_layer_size = utils.get_flat_layer_size(in_channels, adjacency_list, seq_len)
         self.fc_mu = nn.Linear(flat_layer_size, latent_dim)

@@ -4,7 +4,7 @@ import numpy as np
 from packages.math import math_utils
 
 class AmassDataloader(Dataset):
-    def __init__(self, dataset_directory, window_length = 60, offset = 10, skip_frame_ratio = 4):
+    def __init__(self, dataset_directory, window_length = 64, offset = 16, skip_frame_ratio = 4):
         super(AmassDataloader, self).__init__()
         self.dataset_root_directory = dataset_directory
         self.window_length = window_length

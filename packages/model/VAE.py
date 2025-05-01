@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch
 
 class VAE(nn.Module):
-    def __init__(self, in_channels, latent_dim, adjacency_list, seq_len = 60):
+    def __init__(self, in_channels, latent_dim, adjacency_list, seq_len = 65):
         super(VAE, self).__init__()
         self.encoder = Encoder(in_channels, latent_dim, adjacency_list, seq_len)
         self.decoder = Decoder(in_channels, latent_dim, adjacency_list, seq_len)

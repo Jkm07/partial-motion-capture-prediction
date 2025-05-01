@@ -22,7 +22,7 @@ def run(arguments):
     vae.load_state_dict(torch.load(arguments.model_path))
     vae.eval()
 
-    test_data = get_amass_dataloader(arguments.test_dir, arguments.test_batch_size)
+    test_data = get_amass_dataloader(arguments.test_dir, arguments.test_batch_size, arguments.sequence_length)
 
     test_service_instance = test_service.TestService(vae, test_data)
     test_result =  test_service_instance.run_test()
@@ -47,7 +47,7 @@ def run_save_results(arguments):
     vae.load_state_dict(torch.load(arguments.model_path))
     vae.eval()
 
-    test_data = get_amass_dataloader(arguments.test_dir, 1)
+    test_data = get_amass_dataloader(arguments.test_dir, 1, arguments.sequence_length)
 
     test_service_instance = test_service.TestService(vae, test_data)
 

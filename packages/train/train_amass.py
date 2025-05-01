@@ -25,11 +25,11 @@ def run(arguments):
     vae = VAE(ROTATION_MATRIX_SIZE, arguments.latent_dim, adjacency_list, arguments.sequence_length).to(device)
     optimizer = torch.optim.Adam(vae.parameters(), lr=arguments.learning_rate)
 
-    #summary(vae, input_size=(8, 60, 52, 6))
+    #summary(vae, input_size=(8, 64, 52, 6))
 
-    train_data = get_amass_dataloader(arguments.train_dir, arguments.train_batch_size)
-    valid_data = get_amass_dataloader(arguments.valid_dir, arguments.valid_batch_size)
-    #test_data = get_amass_dataloader(arguments.test_dir, arguments.test_batch_size)
+    train_data = get_amass_dataloader(arguments.train_dir, arguments.train_batch_size, arguments.sequence_length)
+    valid_data = get_amass_dataloader(arguments.valid_dir, arguments.valid_batch_size, arguments.sequence_length)
+    #test_data = get_amass_dataloader(arguments.test_dir, arguments.test_batch_size, , arguments.sequence_length)
 
     wandb_utils.init(arguments, vae)
 
