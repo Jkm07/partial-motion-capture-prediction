@@ -38,7 +38,7 @@ class Decoder(nn.Module):
     
     def forward(self, x):
         x = self.fc(x)
-        x = x.reshape(x.size(0), 2, len(self.adjacency_list), self.first_node_size)
+        x = x.view(x.size(0), 2, len(self.adjacency_list), self.first_node_size)
         for block in self.res_blocks:
             x = block(x)
         return x
