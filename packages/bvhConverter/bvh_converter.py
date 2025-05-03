@@ -1,7 +1,8 @@
+from io import TextIOWrapper
 import re
 import numpy as np
 from .bvh import Bvh
-from .node import Node
+from .node import Node, get_adjacency_list, add_position_node_to_adjacency_list, add_hand_legs_skip_connection
 from .motion_array import MotionArray
 
 def get_line(f):
@@ -45,8 +46,21 @@ def create_node(f, joints, parent):
         else:
             break
     return curr_node
+
+DEFAULT_BVH_HIERARCHY_FILE = "./packages/bvhConverter/data/amass_hierarchy"
+
+def get_default_hierarchy():
+    with open(DEFAULT_BVH_HIERARCHY_FILE) as f:
+        return get_hierarchy(f)
     
-def get_hierarchy(f) -> list:
+def get_prepared_adjacency_list():
+    hierarchy = get_default_hierarchy()
+    adjacency_list = get_adjacency_list(hierarchy[0])
+    adjacency_list = add_position_node_to_adjacency_list(adjacency_list)
+    adjacency_list = add_hand_legs_skip_connection(adjacency_list)
+    return adjacency_list
+
+def get_hierarchy(f: TextIOWrapper) -> list[Node]:
     joints = []
     hierarchy_line = get_line(f)
     if(hierarchy_line == "HIERARCHY"):

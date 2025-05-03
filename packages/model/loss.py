@@ -1,17 +1,74 @@
 import torch
 import torch.nn.functional as F
 from packages.math.math_utils import matrix6D_to_9D_torch
+from packages.utils.slices import ROTATION_FLAT, POSITION_FLAT
+from dataclasses import dataclass
 
+SMOOTH_WEIGHT = 0.05
 
-def vae_loss(actual, expected, mu, logvar):
-    BCE_ROT = rot_loss(actual[..., :-1, :], expected[..., :-1, :])
-    BCE_POS = F.mse_loss(actual[..., -1, :], expected[..., -1, :], reduction='sum')
-    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-    return BCE_ROT + BCE_POS + KLD, (float(BCE_ROT), float(BCE_POS), float(KLD))
+@dataclass
+class LossDetails:
+    rotation_loss: float
+    position_loss: float
+    smooth_rotation_loss: float
+    smooth_position_loss: float
+    kld: float
+    def get_loss(self):
+        return self.rotation_loss + self.position_loss + self.smooth_position_loss + self.smooth_position_loss + self.kld
+
+def vae_loss(actual, expected, mu, logvar) -> tuple[torch.Tensor, LossDetails]:
+    loss_data = get_loss_data(actual, expected)
+    ROT_LOSS = rot_loss_9D(loss_data.actual_rotation, loss_data.expected_rotation)
+    POS_LOSS = position_loss(loss_data.actual_position, loss_data.expected_position)
+    SMOOTH_ROT_LOSS = rotation_smooth_loss(loss_data.actual_rotation) * SMOOTH_WEIGHT
+    SMOOTH_POS_LOSS = position_smooth_loss(loss_data.actual_position) * SMOOTH_WEIGHT
+    KLD = kld_loss(mu, logvar)
+    loss_details = LossDetails(
+        rotation_loss=float(ROT_LOSS), 
+        position_loss=float(POS_LOSS),
+        smooth_rotation_loss=float(SMOOTH_ROT_LOSS),
+        smooth_position_loss=float(SMOOTH_POS_LOSS),
+        kld=float(KLD))
+    return ROT_LOSS + POS_LOSS + KLD + SMOOTH_ROT_LOSS + SMOOTH_POS_LOSS, loss_details
+
 
 def rot_loss(actual, expected):
     actual = matrix6D_to_9D_torch(actual)
-    expected = matrix6D_to_9D_torch(expected).transpose(-1, -2)
-    ones = torch.eye(3).expand(*expected.shape).to('cuda')
+    expected = matrix6D_to_9D_torch(expected)
 
-    return F.mse_loss(ones, torch.matmul(actual, expected), reduction='sum')
+    return rot_loss_9D(actual, expected)
+
+def rot_loss_9D(actual, expected):
+    ones = torch.eye(3).expand(*expected.shape).cuda()
+    return F.mse_loss(ones, torch.matmul(actual, expected.transpose(-1, -2)), reduction='mean')
+
+def rotation_smooth_loss(actual):
+    differ = torch.matmul(actual[:, 1:, ...], actual[:, :-1, ...].transpose(-1, -2))
+    ones = torch.eye(3).expand(*differ.shape).cuda()
+    return F.mse_loss(ones, differ, reduction='mean')
+
+def position_loss(actual, expected):
+    return F.mse_loss(actual, expected, reduction='mean')
+
+def position_smooth_loss(actual):
+    return torch.diff(actual, dim=1).pow(2).mean()
+
+def kld_loss(mu, logvar):
+    return -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+
+@dataclass
+class LossRototationMatrixData:
+    actual_rotation: torch.Tensor
+    expected_rotation: torch.Tensor
+    actual_position: torch.Tensor
+    expected_position: torch.Tensor
+
+def get_loss_data(actual: torch.Tensor, expected: torch.Tensor) -> LossRototationMatrixData:
+    return LossRototationMatrixData(
+        actual_rotation=matrix6D_to_9D_torch(actual[ROTATION_FLAT]),
+        expected_rotation=matrix6D_to_9D_torch(expected[ROTATION_FLAT]),
+        actual_position=actual[POSITION_FLAT], 
+        expected_position=expected[POSITION_FLAT])
+
+
+

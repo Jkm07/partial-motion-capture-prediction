@@ -2,60 +2,74 @@
 import torch.nn as nn
 import torch
 import numpy as np
-from packages.math import math_utils
 from packages.utils import joint_utils
-from packages.model.loss import rot_loss 
+from packages.test.metrics import get_position_metrics, get_rotation_metrics
+from packages.model.loss import vae_loss
+from dataclasses import dataclass
+from packages.model.loss import LossDetails
+
+@dataclass
+class TestResult:
+    loss: LossDetails
+    poss_mse: float
+    l2lq: float
+    l2q: float
+
+def summaraize_test_result(results: list[TestResult]) -> TestResult:
+    rotation_loss_list = [i.loss.rotation_loss for i in results]
+    postion_loss_list = [i.loss.position_loss for i in results]
+    smth_rotation_loss_list = [i.loss.smooth_rotation_loss for i in results]
+    smth_position_loss_list = [i.loss.smooth_position_loss for i in results]
+    kld_loss_list = [i.loss.kld for i in results]
+
+    loss_detail = LossDetails(
+        rotation_loss=np.mean(rotation_loss_list),
+        position_loss=np.mean(postion_loss_list),
+        smooth_rotation_loss=np.mean(smth_rotation_loss_list),
+        smooth_position_loss=np.mean(smth_position_loss_list),
+        kld=np.mean(kld_loss_list))
+    
+    possition_mse = np.mean([i.poss_mse for i in results])
+    l2lq = np.mean([i.l2lq for i in results])
+    l2q = np.mean([i.l2q for i in results])
+
+    return TestResult(loss = loss_detail, poss_mse=possition_mse, l2lq=l2lq, l2q=l2q)
 
 class TestService:
     def __init__(self, model: nn.Module, dataloader: torch.utils.data.DataLoader):
-        self.model = model
-        self.dataloader = dataloader
-        self.test_history = []
+        self.model: nn.Module = model
+        self.dataloader: torch.utils.data.DataLoader = dataloader
+        self.test_history: list[TestResult] = []
 
     def run_test(self, disable_joints = []):
-        loss_list = []
-        poss_loss_list = []
-        rot_loss_list = []
+        results = []
         with torch.no_grad():
             self.model.eval()
             for data in self.dataloader:
-                output, _, _ = self.model(joint_utils.get_data_disable_joint(data, disable_joints) if disable_joints else data)
+                output, mu, logvar = self.model(joint_utils.get_data_disable_joint(data, disable_joints) if disable_joints else data)
 
-                loss, poss_loss, rot_loss = self.run_test_for_given_data(output, data, disable_joints)
-                loss_list.append(loss)
-                poss_loss_list.append(poss_loss)
-                rot_loss_list.append(rot_loss)
+                result = self.run_test_for_given_data(output, data, mu, logvar, disable_joints)
+                results.append(result)
 
-        test_item = {"rot_loss": np.mean(loss_list), "poss_l2_loss": np.mean(poss_loss_list), "rot_l2q_loss": np.mean(rot_loss_list)}
+        test_item = summaraize_test_result(results)
 
         self.test_history.append(test_item)
         return test_item
     
-    def run_test_for_given_data(self, actual, expected, disable_joints = []):
-        ROT_LOSS = 0
-        if disable_joints:
-            ROT_LOSS = rot_loss(actual[..., disable_joints, :], expected[..., disable_joints, :]).cpu().numpy()
-        else:
-            ROT_LOSS = rot_loss(actual, expected).cpu().numpy()
-        poss_loss, l2q = self.get_l2q(actual, expected, disable_joints)
-        return ROT_LOSS, poss_loss, l2q
+    def run_test_for_given_data(self, actual, expected, mu, logvar, disable_joints = []):
+        _, loss_details = vae_loss(actual, expected, mu, logvar)
+        poss_loss = get_position_metrics(actual, expected, disable_joints)
+        l2lq, l2q = get_rotation_metrics(actual, expected, disable_joints)
+        return TestResult(loss=loss_details,
+                          poss_mse=poss_loss,
+                          l2lq=l2lq,
+                          l2q=l2q)
     
-    def get_idx_of_last_best_result(self, metric = 'rot_loss', skip_epoch = 1) -> int:
-        array_metric = np.array([m[metric] for m in self.test_history])[::skip_epoch]
+    def get_idx_of_last_best_result(self, skip_epoch = 1) -> int:
+        array_metric = np.array([m.loss.get_loss() for m in self.test_history])[::skip_epoch]
         return np.argmin(array_metric)
     
-    def is_last_test_improve_result(self, metric = 'rot_loss', skip_epoch = 1) -> bool:
-        return self.get_idx_of_last_best_result(metric, skip_epoch) == len(self.test_history[::skip_epoch]) - 1
+    def is_last_test_improve_result(self, skip_epoch = 1) -> bool:
+        return self.get_idx_of_last_best_result(skip_epoch) == len(self.test_history[::skip_epoch]) - 1
     
-    def get_l2q(self, actual, expected, disable_joints: list):
-        actual_pos = actual[..., -1, :3]
-        expected_pos = expected[..., -1, :3]
-        poss_loss = nn.MSELoss()(actual_pos, expected_pos).cpu().numpy() if actual.shape[-2] -1 not in disable_joints else 0
-
-        return poss_loss, self.get_rot_loss(actual, expected, disable_joints)
     
-    def get_rot_loss(self, actual, expected, disable_joints: list):
-        disable_joints = [i for i in disable_joints if i != actual.shape[-2] -1]
-        actual_rot_quat = math_utils.get_quat_from_matrix(actual[..., :-1, :][..., disable_joints, :] if disable_joints else actual[..., :-1, :])
-        expected_rot_quat = math_utils.get_quat_from_matrix(expected[..., :-1, :][..., disable_joints, :] if disable_joints else expected[..., :-1, :])
-        return nn.MSELoss()(actual_rot_quat, expected_rot_quat).cpu().numpy()

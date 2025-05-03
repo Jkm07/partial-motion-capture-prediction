@@ -3,6 +3,11 @@ from torch.utils.data import Dataset
 import numpy as np
 from packages.math import math_utils
 
+HIPS_SLICE = (..., 0, slice(None), slice(None))
+FIRST_HIPS_ROTATION = (..., 0, 0, slice(None), slice(None))
+
+SMPLH_PERMUTATION_TO_BVH = [0, 1, 4, 7, 10, 2, 5, 8, 11, 3, 6, 9, 12, 15, 13, 16, 18, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 14, 17, 19, 21] + list(range(37, 52))
+
 class AmassDataloader(Dataset):
     def __init__(self, dataset_directory, window_length = 64, offset = 16, skip_frame_ratio = 4):
         super(AmassDataloader, self).__init__()
@@ -83,11 +88,11 @@ class AmassDataloader(Dataset):
         return out
     
     def permute_to_bvh_format(self, rotation):
-        perm = [0, 1, 4, 7, 10, 2, 5, 8, 11, 3, 6, 9, 12, 15, 13, 16, 18, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 14, 17, 19, 21] + list(range(37, 52))
-        return rotation[..., perm, :]
+        return rotation[..., SMPLH_PERMUTATION_TO_BVH, :]
     
     def normalize_hips_rotation(self, rotation_matrix: np.array):
-        rotation_matrix[..., 0, :, :] = rotation_matrix[..., 0, :, :] @ rotation_matrix[..., 0, 0, :, :].T
+        
+        rotation_matrix[HIPS_SLICE] = rotation_matrix[HIPS_SLICE] @ rotation_matrix[FIRST_HIPS_ROTATION].T
         return rotation_matrix
     
     def normalize_position(self, position):
