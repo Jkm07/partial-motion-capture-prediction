@@ -4,8 +4,9 @@ from packages.math.math_utils import matrix6D_to_9D_torch
 from packages.utils.slices import ROTATION_FLAT, POSITION_FLAT
 from dataclasses import dataclass
 
-SMOOTH_WEIGHT = 0.05
-POS_WEIGHT = 0.01
+SMOOTH_WEIGHT = 0.
+POS_WEIGHT = 0.
+KLD_WEIGHT = 0.
 
 @dataclass
 class LossDetails:
@@ -23,7 +24,7 @@ def vae_loss(actual, expected, mu, logvar) -> tuple[torch.Tensor, LossDetails]:
     POS_LOSS = position_loss(loss_data.actual_position, loss_data.expected_position) * POS_WEIGHT
     SMOOTH_ROT_LOSS = rotation_smooth_loss(loss_data.actual_rotation) * SMOOTH_WEIGHT
     SMOOTH_POS_LOSS = position_smooth_loss(loss_data.actual_position) * SMOOTH_WEIGHT
-    KLD = kld_loss(mu, logvar)
+    KLD = kld_loss(mu, logvar) * KLD_WEIGHT
     loss_details = LossDetails(
         rotation_loss=float(ROT_LOSS), 
         position_loss=float(POS_LOSS),
