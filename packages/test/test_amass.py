@@ -1,5 +1,5 @@
 from packages.dataloader.dataloader_utils import get_amass_dataloader
-from packages.bvhConverter.bvh_converter import get_hierarchy
+from packages.bvhConverter.bvh_converter import get_default_hierarchy
 from packages.model.VAE import get_vae_model
 import torch
 from packages.test import test_service
@@ -34,15 +34,15 @@ def run_save_results(arguments):
 
     with torch.no_grad():
         vae.eval()
-        hierarchy = get_hierarchy()
+        hierarchy = get_default_hierarchy()
         for i, data in enumerate(test_data):
-            output, _, _ = vae(data)
-            result = test_service_instance.run_test_for_given_data(output, data)
+            output, mu, logvar = vae(data)
+            result = test_service_instance.run_test_for_given_data(output, data, mu, logvar)
             convert_to_bvh(data[0], hierarchy, get_file_name(i, result.l2lq, True))
             convert_to_bvh(output[0], hierarchy, get_file_name(i, result.l2lq, False))
 
 def convert_to_bvh(data, hierarchy, file_name):
-    pos = data[POSITION_FLAT][..., -3].cpu().numpy()
+    pos = data[POSITION_FLAT][..., :3].cpu().numpy()
     rot = math_utils.get_euler_from_matrix(data[ROTATION_FLAT]).cpu().numpy()
     amass_service.save_output(pos, rot, hierarchy, file_name)
 
