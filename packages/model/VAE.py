@@ -48,4 +48,4 @@ def print_model_data(vae: VAE, sequence_length: int, adjacency_list: list):
         sequence_length, 
         len(adjacency_list), 
         ROTATION_MATRIX_SIZE), 
-        dtypes=[torch.float64], device="cpu")
+        dtypes=[torch.float64], device="cpu", depth=4)

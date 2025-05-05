@@ -1,4 +1,5 @@
 from packages.model.ResNet import ResNet
+from packages.model.FinishModule import FinishModule
 import torch.nn as nn
 
 
@@ -35,6 +36,8 @@ class Decoder(nn.Module):
         self.res_blocks.append(ResNet(8, 8, adjacency_list, seq_len, stride=2, is_transpose=True))
 
         self.res_blocks.append(ResNet(8, out_channels, adjacency_list, seq_len, with_relu=False))
+
+        self.res_blocks.append(FinishModule(6, out_channels, adjacency_list))
     
     def forward(self, x):
         x = self.fc(x)
