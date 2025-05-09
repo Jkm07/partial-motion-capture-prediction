@@ -20,7 +20,7 @@ class LossDetails:
 
 def vae_loss(actual, expected, mu, logvar) -> tuple[torch.Tensor, LossDetails]:
     loss_data = get_loss_data(actual, expected)
-    ROT_LOSS = rot_loss_9D(actual[ROTATION_FLAT], expected[ROTATION_FLAT])
+    ROT_LOSS = rot_loss_9D(loss_data.actual_rotation, loss_data.expected_rotation)
     POS_LOSS = position_loss(loss_data.actual_position, loss_data.expected_position) * POS_WEIGHT
     SMOOTH_ROT_LOSS = rotation_smooth_loss(loss_data.actual_rotation, loss_data.expected_rotation) * SMOOTH_WEIGHT
     SMOOTH_POS_LOSS = position_smooth_loss(loss_data.actual_position, loss_data.expected_position) * SMOOTH_WEIGHT
@@ -41,7 +41,8 @@ def rot_loss(actual, expected):
     return rot_loss_9D(actual, expected)
 
 def rot_loss_9D(actual, expected):
-    return F.l1_loss(actual, expected)
+    ones = torch.eye(3).expand(*expected.shape).cuda()
+    return F.l1_loss(ones, torch.matmul(actual, expected.transpose(-1, -2)), reduction='mean')
 
 def rotation_smooth_loss(actual, expected):
     return F.l1_loss(_rotation_differ(actual), _rotation_differ(expected), reduction='mean')
