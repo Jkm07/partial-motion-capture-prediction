@@ -8,7 +8,7 @@ class FinishModule(nn.Module):
     def __init__(self, in_channels, out_channels, adjacency_list):
         super(FinishModule, self).__init__()
 
-        self.nodes_convolutions = nn.ModuleList([nn.Conv1d(in_channels, out_channels, kernel_size=1, bias=False) for _ in adjacency_list])
+        self.nodes_convolutions = nn.ModuleList([nn.Conv1d(in_channels, out_channels, kernel_size=1) for _ in adjacency_list])
 
     
     def forward(self, x):
