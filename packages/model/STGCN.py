@@ -23,7 +23,7 @@ class STGCN(nn.Module):
             
 
     def _create_convoltion_node(self, single_in_channels, single_out_channels, adjacency_list_item):
-        return nn.Sequential(nn.Linear(in_features=single_in_channels * len(adjacency_list_item), out_features=single_out_channels),  nn.ReLU()
+        return nn.Sequential(nn.Linear(in_features=single_in_channels * len(adjacency_list_item), out_features=single_out_channels, bias=False),  nn.ReLU()
         )
     
     def _create_time_convolotion(self, in_channels, out_channels, stride, is_transpose = False, kernel_size = 3, padding = 1, padding_mode = 'reflect'):
@@ -34,7 +34,8 @@ class STGCN(nn.Module):
                 stride= stride, 
                 kernel_size = kernel_size,
                 padding = padding,
-                output_padding= padding
+                output_padding= padding,
+                bias=False
             )
         else:
             return nn.Conv1d(
@@ -43,7 +44,8 @@ class STGCN(nn.Module):
                 stride= stride, 
                 kernel_size = kernel_size,
                 padding = padding,
-                padding_mode = padding_mode)
+                padding_mode = padding_mode,
+                bias=False)
 
     
     def forward(self, x):
