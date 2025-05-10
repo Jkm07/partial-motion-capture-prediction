@@ -21,6 +21,8 @@ def get_train_arguments():
     parser.add_argument("--learning_rate", type=float, default=1e-2)
     parser.add_argument("--sequence_length", type=int, default=64)
 
-    parser.add_argument("--model_path", type=str, default="checkpoints/model_layer_norm")
+    parser.add_argument("--model_path", type=str, default="checkpoints/storage/model_work")
+
+    parser.add_argument("--data_representation", type=str, default="quternions")
 
     return parser.parse_args()

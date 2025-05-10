@@ -20,9 +20,9 @@ class LossDetails:
 
 def vae_loss(actual, expected, mu, logvar) -> tuple[torch.Tensor, LossDetails]:
     loss_data = get_loss_data(actual, expected)
-    ROT_LOSS = rot_loss_9D(actual[ROTATION_FLAT], expected[ROTATION_FLAT])
+    ROT_LOSS = rot_loss_9D(loss_data.actual_rotation, loss_data.expected_rotation)
     POS_LOSS = position_loss(loss_data.actual_position, loss_data.expected_position) * POS_WEIGHT
-    SMOOTH_ROT_LOSS = rotation_smooth_loss(loss_data.actual_rotation, loss_data.expected_rotation) * SMOOTH_WEIGHT
+    SMOOTH_ROT_LOSS = 0#rotation_smooth_loss(loss_data.actual_rotation, loss_data.expected_rotation) * SMOOTH_WEIGHT
     SMOOTH_POS_LOSS = position_smooth_loss(loss_data.actual_position, loss_data.expected_position) * SMOOTH_WEIGHT
     KLD = kld_loss(mu, logvar) * KLD_WEIGHT
     loss_details = LossDetails(
@@ -67,8 +67,8 @@ class LossRototationMatrixData:
 
 def get_loss_data(actual: torch.Tensor, expected: torch.Tensor) -> LossRototationMatrixData:
     return LossRototationMatrixData(
-        actual_rotation=matrix6D_to_9D_torch(actual[ROTATION_FLAT]),
-        expected_rotation=matrix6D_to_9D_torch(expected[ROTATION_FLAT]),
+        actual_rotation=actual[ROTATION_FLAT],
+        expected_rotation=expected[ROTATION_FLAT],
         actual_position=actual[POSITION_FLAT], 
         expected_position=expected[POSITION_FLAT])
 

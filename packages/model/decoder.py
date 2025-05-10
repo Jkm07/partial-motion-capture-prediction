@@ -37,7 +37,7 @@ class Decoder(nn.Module):
 
         self.res_blocks.append(ResNet(8, out_channels, adjacency_list, seq_len, with_relu=False))
 
-        self.res_blocks.append(FinishModule(6, out_channels, adjacency_list))
+        self.res_blocks.append(FinishModule(out_channels, out_channels, adjacency_list))
     
     def forward(self, x):
         x = self.fc(x)

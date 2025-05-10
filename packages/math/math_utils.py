@@ -13,12 +13,60 @@ def to_angle(rotation_matrix):
         y[...,None], 
         z[...,None]], axis=-1) * angle / (2 * np.sin(angle))
 
-
-def to_rotation_matrix(axis_angle):
-    angle = np.linalg.norm(axis_angle, axis=-1)
-    divide_norm = angle.copy()
+def normalize_axis(axis_angle):
+    norm = np.linalg.norm(axis_angle, axis=-1)
+    divide_norm = norm.copy()
     divide_norm[divide_norm == 0] = 1
     axis = axis_angle / divide_norm[...,None]
+    return norm, axis
+
+def to_quternions(axis_angle):
+    angle, axis = normalize_axis(axis_angle)
+    sin = np.sin(angle / 2)[...,None]
+    cos = np.cos(angle / 2)[...,None]
+    return np.concatenate((cos, axis * sin), axis=-1)
+
+def quaternion_inverse(quternion):
+    quternion = quternion.copy()
+    quternion[..., -3:] *= -1
+    return quternion
+
+def quaternion_multiply(q1, q2):
+    """Multiply two quaternions (Hamilton product)."""
+    w1, x1, y1, z1 = q1[..., 0], q1[..., 1], q1[..., 2], q1[..., 3], 
+    w2, x2, y2, z2 = q2[..., 0], q2[..., 1], q2[..., 2], q2[..., 3], 
+    
+    w = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2
+    x = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2
+    y = w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2
+    z = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2
+    
+    return np.concatenate([w[..., None], x[..., None], y[..., None], z[..., None]], axis=-1)
+
+def quaternion_multiply_torch(q1, q2):
+    # Split components
+    w1, x1, y1, z1 = torch.unbind(q1, dim=-1)
+    w2, x2, y2, z2 = torch.unbind(q2, dim=-1)
+    
+    # Compute product components
+    w = w1*w2 - x1*x2 - y1*y2 - z1*z2
+    x = w1*x2 + x1*w2 + y1*z2 - z1*y2
+    y = w1*y2 - x1*z2 + y1*w2 + z1*x2
+    z = w1*z2 + x1*y2 - y1*x2 + z1*w2
+    
+    # Stack components back together
+    return torch.stack((w, x, y, z), dim=-1)
+
+def to_decompose_quternion(quternion):
+    sin, axis = normalize_axis(quternion[..., -3:])
+    return np.concatenate([quternion[..., :1], sin[..., None], axis], axis=-1)
+
+def from_decompose_quternion(dec_quternion):
+    return torch.concatenate([dec_quternion[..., 0:1], dec_quternion[..., -3:] * dec_quternion[..., 1:2]], dim=-1)
+
+
+def to_rotation_matrix(axis_angle):
+    angle, axis = normalize_axis(axis_angle)
     sin = np.sin(angle)
     cos = np.cos(angle)
 

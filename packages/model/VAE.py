@@ -7,6 +7,7 @@ import torch
 from torchinfo import summary
 
 ROTATION_MATRIX_SIZE = 6
+QUTERNION_MATRIX_SIZE = 5
 
 class VAE(nn.Module):
     def __init__(self, in_channels, latent_dim, adjacency_list, seq_len):
@@ -32,7 +33,7 @@ class VAE(nn.Module):
     
 def get_vae_model(arguments):
     adjacency_list = get_prepared_adjacency_list()
-    vae = VAE(ROTATION_MATRIX_SIZE, 
+    vae = VAE(QUTERNION_MATRIX_SIZE, 
               arguments.latent_dim, 
               adjacency_list,
               arguments.sequence_length)
@@ -47,5 +48,5 @@ def print_model_data(vae: VAE, sequence_length: int, adjacency_list: list):
         MOCK_BATCH_SIZE, 
         sequence_length, 
         len(adjacency_list), 
-        ROTATION_MATRIX_SIZE), 
+        QUTERNION_MATRIX_SIZE), 
         dtypes=[torch.float64], device="cpu", depth=4)

@@ -6,6 +6,9 @@ from packages.math import math_utils
 HIPS_SLICE = (..., 0, slice(None), slice(None))
 FIRST_HIPS_ROTATION = (..., 0, 0, slice(None), slice(None))
 
+HIPS_SLICE_QUATERNION = (..., 0, slice(None))
+FIRST_HIPS_QUETERNION = (..., 0, 0, slice(None))
+
 SMPLH_PERMUTATION_TO_BVH = [0, 1, 4, 7, 10, 2, 5, 8, 11, 3, 6, 9, 12, 15, 13, 16, 18, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 14, 17, 19, 21] + list(range(37, 52))
 
 class AmassDataloader(Dataset):
@@ -70,7 +73,7 @@ class AmassDataloader(Dataset):
             rotations = file['poses'][slice_idx, :]
             positions = file['trans'][slice_idx, :]
             return np.concatenate((
-                self.get_prepared_rotation_matrix(rotations), 
+                self.get_prepared_quternion_matrix(rotations), 
                 self.get_prepared_position_matrix(positions)), axis=-2)
         
     def get_prepared_rotation_matrix(self, rotation):
@@ -81,9 +84,17 @@ class AmassDataloader(Dataset):
         rotation_matrix = math_utils.matrix9D_to_6D(rotation_matrix)
         return rotation_matrix
     
+    def get_prepared_quternion_matrix(self, rotation):
+        rotation = rotation.reshape((-1, 52, 3))
+        rotation = self.permute_to_bvh_format(rotation)
+        quternion_matrix = math_utils.to_quternions(rotation)
+        quternion_matrix = self.normalize_hips_quternion(quternion_matrix)
+        return math_utils.to_decompose_quternion(quternion_matrix)
+    
     def get_prepared_position_matrix(self, position):
         out = self.normalize_position(position)
-        out = np.tile(position, 2)
+        zero_mock = np.zeros_like(out[..., :-1])
+        out = np.concatenate([position, zero_mock], axis=-1)
         out = np.expand_dims(out, axis=-2)
         return out
     
@@ -91,8 +102,12 @@ class AmassDataloader(Dataset):
         return rotation[..., SMPLH_PERMUTATION_TO_BVH, :]
     
     def normalize_hips_rotation(self, rotation_matrix: np.array):
-        
         rotation_matrix[HIPS_SLICE] = rotation_matrix[HIPS_SLICE] @ rotation_matrix[FIRST_HIPS_ROTATION].T
+        return rotation_matrix
+    
+    def normalize_hips_quternion(self, rotation_matrix: np.array):
+        inverse_start_hips = math_utils.quaternion_inverse(rotation_matrix[FIRST_HIPS_QUETERNION])
+        rotation_matrix[HIPS_SLICE_QUATERNION] = math_utils.quaternion_multiply(rotation_matrix[HIPS_SLICE_QUATERNION], inverse_start_hips)
         return rotation_matrix
     
     def normalize_position(self, position):
