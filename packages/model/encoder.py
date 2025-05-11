@@ -11,7 +11,7 @@ class Encoder(nn.Module):
         seq_len //= 2
         self.res_blocks.append(ResNet(8, 8, adjacency_list, seq_len, stride=2))
 
-        self.res_blocks.append(ResNet(8, 8, adjacency_list, seq_len))
+        self.res_blocks.append(ResNet(8, 8, adjacency_list, seq_len)) #mid_transfer
         seq_len //= 2
         self.res_blocks.append(ResNet(8, 12, adjacency_list, seq_len, stride=2))
 
@@ -19,7 +19,7 @@ class Encoder(nn.Module):
         seq_len //= 2
         self.res_blocks.append(ResNet(12, 12, adjacency_list, seq_len, stride=2))
 
-        self.res_blocks.append(ResNet(12, 12, adjacency_list, seq_len))
+        self.res_blocks.append(ResNet(12, 12, adjacency_list, seq_len)) #mid_transfer
         seq_len //= 2
         self.res_blocks.append(ResNet(12, 16, adjacency_list, seq_len, stride=2))
 
@@ -27,7 +27,7 @@ class Encoder(nn.Module):
         seq_len //= 2
         self.res_blocks.append(ResNet(16, 16, adjacency_list, seq_len, stride=2))
 
-        self.res_blocks.append(ResNet(16, 16, adjacency_list, seq_len))
+        self.res_blocks.append(ResNet(16, 16, adjacency_list, seq_len)) #mid_transfer
         seq_len //= 2
 
         self.pooling = nn.MaxPool1d(kernel_size=4)
@@ -36,10 +36,13 @@ class Encoder(nn.Module):
         self.fc_logvar = nn.Linear(424, latent_dim)
     
     def forward(self, x):
-        for block in self.res_blocks:
+        mid_tensors = []
+        for i, block in enumerate(self.res_blocks):
             x = block(x)
+            if (i - 2) % 4 == 0:
+                mid_tensors.append(x)
         x = x.view(x.size(0), -1)
         x = self.pooling(x)
         mu = self.fc_mu(x)
         logvar = self.fc_logvar(x)
-        return mu, logvar
+        return mu, logvar, mid_tensors

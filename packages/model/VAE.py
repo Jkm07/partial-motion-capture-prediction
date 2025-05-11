@@ -21,9 +21,9 @@ class VAE(nn.Module):
         return mu + eps * std
     
     def forward(self, x):
-        mu, logvar = self.encoder(x)
+        mu, logvar, mid_tensors = self.encoder(x)
         z = self.reparameterize(mu, logvar)
-        return self.decoder(z), mu, logvar
+        return self.decoder(z, mid_tensors), mu, logvar
     
     def encode(self, x):
         return self.encoder(x)
