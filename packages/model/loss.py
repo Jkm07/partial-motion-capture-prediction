@@ -18,8 +18,8 @@ class LossDetails:
     def get_loss(self):
         return self.rotation_loss + self.position_loss + self.smooth_position_loss + self.smooth_position_loss + self.kld
 
-def vae_loss(actual, expected, mu, logvar) -> tuple[torch.Tensor, LossDetails]:
-    loss_data = get_loss_data(actual, expected)
+def vae_loss(actual, expected, mu, logvar, disable_joints = []) -> tuple[torch.Tensor, LossDetails]:
+    loss_data = get_loss_data_disable(actual, expected, disable_joints) if disable_joints else get_loss_data(actual, expected)
     ROT_LOSS = rot_loss_9D(loss_data.actual_rotation, loss_data.expected_rotation)
     POS_LOSS = position_loss(loss_data.actual_position, loss_data.expected_position) * POS_WEIGHT
     SMOOTH_ROT_LOSS = 0#rotation_smooth_loss(loss_data.actual_rotation, loss_data.expected_rotation) * SMOOTH_WEIGHT
@@ -62,6 +62,8 @@ def kld_loss(mu, logvar):
 class LossRototationMatrixData:
     actual_rotation: torch.Tensor
     expected_rotation: torch.Tensor
+    actual_rotation_9d: torch.Tensor
+    expected_rotation_9d: torch.Tensor
     actual_position: torch.Tensor
     expected_position: torch.Tensor
 
@@ -69,8 +71,31 @@ def get_loss_data(actual: torch.Tensor, expected: torch.Tensor) -> LossRototatio
     return LossRototationMatrixData(
         actual_rotation=actual[ROTATION_FLAT],
         expected_rotation=expected[ROTATION_FLAT],
+        actual_rotation_9d=0,#matrix6D_to_9D_torch(actual[ROTATION_FLAT]),
+        expected_rotation_9d=0,#matrix6D_to_9D_torch(expected[ROTATION_FLAT]),
         actual_position=actual[POSITION_FLAT], 
         expected_position=expected[POSITION_FLAT])
+
+def get_loss_data_disable(actual: torch.Tensor, expected: torch.Tensor, disable_joints: list[int]) -> LossRototationMatrixData:
+    position_node = expected.size()[-2] -1
+    is_position_node_disable = position_node in disable_joints
+    disable_joints = [joint for joint in disable_joints if joint != position_node]
+    return LossRototationMatrixData(
+        actual_rotation=get_rotation_matrix(actual, disable_joints),
+        expected_rotation=get_rotation_matrix(expected, disable_joints),
+        actual_rotation_9d=0,#matrix6D_to_9D_torch(get_rotation_matrix(actual, disable_joints)),
+        expected_rotation_9d=0,#matrix6D_to_9D_torch(get_rotation_matrix(expected, disable_joints)),
+        actual_position=get_position_matrix(actual, is_position_node_disable), 
+        expected_position=get_position_matrix(expected, is_position_node_disable))
+
+def get_rotation_matrix(mat: torch.Tensor, disable_joints: list[int]):
+    if not disable_joints:
+        return torch.zeros_like(mat[ROTATION_FLAT])
+    disable_slice = (..., disable_joints , slice(None))
+    return mat[disable_slice]
+
+def get_position_matrix(mat: torch.Tensor, is_position_node_disable: bool):
+    return mat[POSITION_FLAT] if is_position_node_disable else torch.zeros_like(mat[POSITION_FLAT])
 
 
 

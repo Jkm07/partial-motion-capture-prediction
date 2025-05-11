@@ -6,5 +6,5 @@ def get_data_disable_joint(data: torch.Tensor, joint_idx) -> torch.Tensor:
     return nw_data
 
 def input_dropout(data: torch.Tensor, dropout: float = 0.1) -> tuple[torch.Tensor, torch.Tensor]:
-    disable_joint_indexes = torch.randint(0, data.shape[-2], (int(data.shape[-2] * dropout),))
-    return get_data_disable_joint(data, disable_joint_indexes), disable_joint_indexes
+    disable_joint_indexes, _ = torch.randperm(data.shape[-2], dtype=torch.int)[:(int(data.shape[-2] * dropout))].sort()
+    return get_data_disable_joint(data, disable_joint_indexes), disable_joint_indexes.tolist()
