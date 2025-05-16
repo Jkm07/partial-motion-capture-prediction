@@ -13,7 +13,7 @@ import datetime
 @print_device_info
 def run(arguments):
     vae = get_vae_model(arguments)
-    optimizer = torch.optim.Adam(vae.parameters(), lr=arguments.learning_rate, weight_decay=1e-5)
+    optimizer = torch.optim.Adam(vae.parameters(), lr=arguments.learning_rate, weight_decay=1e-4)
 
     train_data = get_amass_dataloader(arguments.train_dir, arguments.train_batch_size, arguments.sequence_length)
     valid_data = get_amass_dataloader(arguments.valid_dir, arguments.valid_batch_size, arguments.sequence_length)
