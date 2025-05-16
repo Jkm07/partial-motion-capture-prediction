@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import math
 
 def to_angle(rotation_matrix):
     x = rotation_matrix[..., 2, 1] - rotation_matrix[..., 1, 2]
@@ -205,3 +206,35 @@ def rotation_matrix_to_euler_torch(rot_mats: torch.Tensor) -> torch.Tensor:
 def get_euler_from_matrix(mat: torch.Tensor) -> torch.Tensor:
     mat = matrix6D_to_9D_torch(mat)
     return rotation_matrix_to_euler_torch(mat)
+
+def euler_from_quat(mat: torch.Tensor, degrees=False) -> torch.Tensor:
+    mat = from_decompose_quternion(mat)
+
+    q = torch.nn.functional.normalize(mat, p=2, dim=-1)
+    
+    # Extract components
+    w, z, y, x = q.unbind(-1)
+    
+    # Roll (x-axis rotation)
+    sinr_cosp = 2 * (w * x + y * z)
+    cosr_cosp = 1 - 2 * (x * x + y * y)
+    roll = torch.atan2(sinr_cosp, cosr_cosp)
+    
+    # Pitch (y-axis rotation)
+    sinp = 2 * (w * y - z * x)
+    # Use 1.0 - epsilon to avoid NaN when |sinp| is slightly > 1.0 due to numerical precision
+    sinp = torch.clamp(sinp, -1.0 + 1e-7, 1.0 - 1e-7)
+    pitch = torch.asin(sinp)
+    
+    # Yaw (z-axis rotation)
+    siny_cosp = 2 * (w * z + x * y)
+    cosy_cosp = 1 - 2 * (y * y + z * z)
+    yaw = torch.atan2(siny_cosp, cosy_cosp)
+    
+    # Stack angles
+    euler = torch.stack((roll, pitch, yaw), dim=-1)
+    
+    if degrees:
+        euler = euler * (180.0 / math.pi)
+        
+    return euler

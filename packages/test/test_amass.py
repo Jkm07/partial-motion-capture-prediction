@@ -43,7 +43,7 @@ def run_save_results(arguments):
 
 def convert_to_bvh(data, hierarchy, file_name):
     pos = data[POSITION_FLAT][..., :3].cpu().numpy()
-    rot = math_utils.get_euler_from_matrix(data[ROTATION_FLAT]).cpu().numpy()
+    rot = math_utils.euler_from_quat(data[ROTATION_FLAT]).cpu().numpy()
     amass_service.save_output(pos, rot, hierarchy, file_name)
 
 def get_file_name(idx, l2q, is_original):
