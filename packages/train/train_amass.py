@@ -30,7 +30,7 @@ def run(arguments):
             optimizer.zero_grad()
             recon_batch, mu, logvar = vae(dropout_batch)
 
-            loss, detail = vae_loss(recon_batch, batch, mu, logvar, disable_joint_indexes if epoch > 0 else [])
+            loss, detail = vae_loss(recon_batch, batch, mu, logvar, disable_joint_indexes if epoch > 3 else [])
             loss.backward()
             optimizer.step()
 

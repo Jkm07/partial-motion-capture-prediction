@@ -7,30 +7,30 @@ class Encoder(nn.Module):
 
         self.res_blocks = nn.ModuleList()
 
-        self.res_blocks.append(ResNet(in_channels, 8, adjacency_list, seq_len))
+        self.res_blocks.append(ResNet(in_channels, 32, adjacency_list, seq_len))
         seq_len //= 2
-        self.res_blocks.append(ResNet(8, 8, adjacency_list, seq_len, stride=2))
+        self.res_blocks.append(ResNet(32, 32, adjacency_list, seq_len, stride=2))
 
-        self.res_blocks.append(ResNet(8, 8, adjacency_list, seq_len)) #mid_transfer
+        self.res_blocks.append(ResNet(32, 32, adjacency_list, seq_len)) #mid_transfer
         seq_len //= 2
-        self.res_blocks.append(ResNet(8, 12, adjacency_list, seq_len, stride=2))
+        self.res_blocks.append(ResNet(32, 48, adjacency_list, seq_len, stride=2))
 
-        self.res_blocks.append(ResNet(12, 12, adjacency_list, seq_len))
+        self.res_blocks.append(ResNet(48, 48, adjacency_list, seq_len))
         seq_len //= 2
-        self.res_blocks.append(ResNet(12, 12, adjacency_list, seq_len, stride=2))
+        self.res_blocks.append(ResNet(48, 48, adjacency_list, seq_len, stride=2))
 
-        self.res_blocks.append(ResNet(12, 12, adjacency_list, seq_len)) #mid_transfer
+        self.res_blocks.append(ResNet(48, 48, adjacency_list, seq_len)) #mid_transfer
         seq_len //= 2
-        self.res_blocks.append(ResNet(12, 16, adjacency_list, seq_len, stride=2))
+        self.res_blocks.append(ResNet(48, 64, adjacency_list, seq_len, stride=2))
 
-        self.res_blocks.append(ResNet(16, 16, adjacency_list, seq_len))
+        self.res_blocks.append(ResNet(64, 64, adjacency_list, seq_len))
         seq_len //= 2
-        self.res_blocks.append(ResNet(16, 16, adjacency_list, seq_len, stride=2))
+        self.res_blocks.append(ResNet(64, 64, adjacency_list, seq_len, stride=2))
 
-        self.res_blocks.append(ResNet(16, 16, adjacency_list, seq_len)) #mid_transfer
+        self.res_blocks.append(ResNet(64, 64, adjacency_list, seq_len)) #mid_transfer
         seq_len //= 2
 
-        self.pooling = nn.MaxPool1d(kernel_size=4)
+        self.pooling = nn.MaxPool1d(kernel_size=16)
 
         self.fc_mu = nn.Linear(424, latent_dim)
         self.fc_logvar = nn.Linear(424, latent_dim)
