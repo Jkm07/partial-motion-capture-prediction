@@ -8,9 +8,9 @@ class ResNet(nn.Module):
         super(ResNet, self).__init__()
         self.with_relu = with_relu
         self.conv1 = STGCN(in_channels, out_channels, adjacency_list, stride, is_transpose= is_transpose)
-        self.bn1 = nn.LayerNorm([seq_len, len(adjacency_list), out_channels])
+        self.bn1 = nn.LayerNorm([len(adjacency_list), out_channels])
         self.conv2 = STGCN(out_channels, out_channels, adjacency_list)
-        self.bn2 = nn.LayerNorm([seq_len, len(adjacency_list), out_channels])
+        self.bn2 = nn.LayerNorm([len(adjacency_list), out_channels])
         
         self.shortcut = nn.Sequential()
         if stride != 1 or in_channels != out_channels:
