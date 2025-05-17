@@ -22,7 +22,7 @@ def vae_loss(actual, expected, mu, logvar, disable_joints = []) -> tuple[torch.T
     loss_data = get_loss_data_disable(actual, expected, disable_joints) if disable_joints else get_loss_data(actual, expected)
     ROT_LOSS = rot_loss_9D(loss_data.actual_rotation, loss_data.expected_rotation)
     POS_LOSS = position_loss(loss_data.actual_position, loss_data.expected_position) * POS_WEIGHT
-    SMOOTH_ROT_LOSS = 0#rotation_smooth_loss(loss_data.actual_rotation, loss_data.expected_rotation) * SMOOTH_WEIGHT
+    SMOOTH_ROT_LOSS = rotation_smooth_loss(loss_data.actual_rotation, loss_data.expected_rotation) * SMOOTH_WEIGHT
     SMOOTH_POS_LOSS = position_smooth_loss(loss_data.actual_position, loss_data.expected_position) * SMOOTH_WEIGHT
     KLD = kld_loss(mu, logvar) * KLD_WEIGHT
     loss_details = LossDetails(
@@ -44,7 +44,7 @@ def rot_loss_9D(actual, expected):
     return F.l1_loss(actual, expected)
 
 def rotation_smooth_loss(actual, expected):
-    return F.l1_loss(_rotation_differ(actual), _rotation_differ(expected), reduction='mean')
+    return F.l1_loss(torch.diff(actual, dim=1), torch.diff(expected, dim=1))
 
 def _rotation_differ(matrix):
     return torch.matmul(matrix[:, 1:, ...], matrix[:, :-1, ...].transpose(-1, -2))
