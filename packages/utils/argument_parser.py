@@ -18,7 +18,7 @@ def get_train_arguments():
     parser.add_argument("--test_batch_size", type=int, default=4096)
 
     parser.add_argument("--latent_dim", type=int, default=512)
-    parser.add_argument("--learning_rate", type=float, default=1e-2)
+    parser.add_argument("--learning_rate", type=float, default=1e-3)
     parser.add_argument("--sequence_length", type=int, default=64)
 
     parser.add_argument("--model_path", type=str, default="checkpoints/storage/model_work")

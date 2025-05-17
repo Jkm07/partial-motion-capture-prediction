@@ -34,6 +34,8 @@ def run(arguments):
             loss.backward()
             optimizer.step()
 
+            check_is_model_nan(vae)
+
             batch_losses.append(float(loss))
             if i % 100 == 0:
                 wandb_utils.log_train_loss_mid_epoch(float(loss), detail)
@@ -67,3 +69,13 @@ def save_model(model: torch.nn.Module, epoch, loss, l2q, arguments):
     wandb_utils.unwatch(model)
     torch.save(model.state_dict(), path)
     wandb_utils.watch_model(model)
+
+def check_is_model_nan(model: torch.nn.Module):
+    has_nan = False
+    for name, param in model.named_parameters():
+        if torch.isnan(param).any():
+            print(f"⚠️ NaN detected in layer: {name}")
+            has_nan = True
+    
+    if has_nan:
+        raise ValueError("Model contains NaN weights! Training terminated.")
