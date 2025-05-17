@@ -4,7 +4,7 @@ from packages.math.math_utils import matrix6D_to_9D_torch
 from packages.utils.slices import ROTATION_FLAT, POSITION_FLAT
 from dataclasses import dataclass
 
-SMOOTH_WEIGHT = 0.05
+SMOOTH_WEIGHT = 1
 POS_WEIGHT = 0.01
 KLD_WEIGHT = 0.001
 
