@@ -5,7 +5,7 @@ import torch
 
 
 class Decoder(nn.Module):
-    def __init__(self, out_channels, latent_dim, adjacency_list, seq_len):
+    def __init__(self, out_channels, latent_dim, adjacency_list):
         super(Decoder, self).__init__()
 
         self.adjacency_list = adjacency_list
@@ -15,28 +15,22 @@ class Decoder(nn.Module):
         self.fc = nn.Linear(latent_dim, 424)
         self.res_blocks = nn.ModuleList()
 
-        seq_len //= 32
-        self.res_blocks.append(ResNet(self.first_node_size, 64, adjacency_list, seq_len))
-        seq_len *= 2
-        self.res_blocks.append(ResNet(128, 64, adjacency_list, seq_len, stride=2, is_transpose=True))  #mid_transfer
+        self.res_blocks.append(ResNet(self.first_node_size, 64, adjacency_list))
+        self.res_blocks.append(ResNet(128, 64, adjacency_list, stride=2, is_transpose=True))  #mid_transfer
 
-        self.res_blocks.append(ResNet(64, 64, adjacency_list, seq_len))
-        seq_len *= 2
-        self.res_blocks.append(ResNet(64, 64, adjacency_list, seq_len, stride=2, is_transpose=True))
+        self.res_blocks.append(ResNet(64, 64, adjacency_list))
+        self.res_blocks.append(ResNet(64, 64, adjacency_list, stride=2, is_transpose=True))
 
-        self.res_blocks.append(ResNet(64, 48, adjacency_list, seq_len,))
-        seq_len *= 2
-        self.res_blocks.append(ResNet(96, 48, adjacency_list, seq_len, stride=2, is_transpose=True))  #mid_transfer
+        self.res_blocks.append(ResNet(64, 48, adjacency_list,))
+        self.res_blocks.append(ResNet(96, 48, adjacency_list, stride=2, is_transpose=True))  #mid_transfer
 
-        self.res_blocks.append(ResNet(48, 48, adjacency_list, seq_len,))
-        seq_len *= 2
-        self.res_blocks.append(ResNet(48, 48, adjacency_list, seq_len, stride=2, is_transpose=True))
+        self.res_blocks.append(ResNet(48, 48, adjacency_list,))
+        self.res_blocks.append(ResNet(48, 48, adjacency_list, stride=2, is_transpose=True))
 
-        self.res_blocks.append(ResNet(48, 32, adjacency_list, seq_len,))
-        seq_len *= 2
-        self.res_blocks.append(ResNet(64, 32, adjacency_list, seq_len, stride=2, is_transpose=True))  #mid_transfer
+        self.res_blocks.append(ResNet(48, 32, adjacency_list,))
+        self.res_blocks.append(ResNet(64, 32, adjacency_list, stride=2, is_transpose=True))  #mid_transfer
 
-        self.res_blocks.append(ResNet(32, 32, adjacency_list, seq_len))
+        self.res_blocks.append(ResNet(32, 32, adjacency_list))
 
         self.res_blocks.append(FinishModule(32, out_channels, adjacency_list))
     

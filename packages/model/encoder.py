@@ -2,33 +2,27 @@ from packages.model.ResNet import ResNet
 import torch.nn as nn
 
 class Encoder(nn.Module):
-    def __init__(self, in_channels, latent_dim, adjacency_list, seq_len):
+    def __init__(self, in_channels, latent_dim, adjacency_list):
         super(Encoder, self).__init__()
 
         self.res_blocks = nn.ModuleList()
 
-        self.res_blocks.append(ResNet(in_channels, 32, adjacency_list, seq_len))
-        seq_len //= 2
-        self.res_blocks.append(ResNet(32, 32, adjacency_list, seq_len, stride=2))
+        self.res_blocks.append(ResNet(in_channels, 32, adjacency_list))
+        self.res_blocks.append(ResNet(32, 32, adjacency_list, stride=2))
 
-        self.res_blocks.append(ResNet(32, 32, adjacency_list, seq_len)) #mid_transfer
-        seq_len //= 2
-        self.res_blocks.append(ResNet(32, 48, adjacency_list, seq_len, stride=2))
+        self.res_blocks.append(ResNet(32, 32, adjacency_list)) #mid_transfer
+        self.res_blocks.append(ResNet(32, 48, adjacency_list, stride=2))
 
-        self.res_blocks.append(ResNet(48, 48, adjacency_list, seq_len))
-        seq_len //= 2
-        self.res_blocks.append(ResNet(48, 48, adjacency_list, seq_len, stride=2))
+        self.res_blocks.append(ResNet(48, 48, adjacency_list))
+        self.res_blocks.append(ResNet(48, 48, adjacency_list, stride=2))
 
-        self.res_blocks.append(ResNet(48, 48, adjacency_list, seq_len)) #mid_transfer
-        seq_len //= 2
-        self.res_blocks.append(ResNet(48, 64, adjacency_list, seq_len, stride=2))
+        self.res_blocks.append(ResNet(48, 48, adjacency_list)) #mid_transfer
+        self.res_blocks.append(ResNet(48, 64, adjacency_list, stride=2))
 
-        self.res_blocks.append(ResNet(64, 64, adjacency_list, seq_len))
-        seq_len //= 2
-        self.res_blocks.append(ResNet(64, 64, adjacency_list, seq_len, stride=2))
+        self.res_blocks.append(ResNet(64, 64, adjacency_list))
+        self.res_blocks.append(ResNet(64, 64, adjacency_list, stride=2))
 
-        self.res_blocks.append(ResNet(64, 64, adjacency_list, seq_len)) #mid_transfer
-        seq_len //= 2
+        self.res_blocks.append(ResNet(64, 64, adjacency_list)) #mid_transfer
 
         self.pooling = nn.MaxPool1d(kernel_size=16)
 
