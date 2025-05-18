@@ -3,8 +3,9 @@ import torch.nn as nn
 import torch
 import numpy as np
 from packages.utils import joint_utils
-from packages.test.metrics import get_position_metrics, get_rotation_metrics
+from packages.test.metrics import get_position_metrics, get_rotation_matrix_metrics, get_quternion_metrics
 from packages.model.loss import vae_loss
+from packages.model.ModelConfig import RotationMatrixConfig, QueternionConfig
 from dataclasses import dataclass
 from packages.model.loss import LossDetails
 
@@ -36,10 +37,11 @@ def summaraize_test_result(results: list[TestResult]) -> TestResult:
     return TestResult(loss = loss_detail, poss_mse=possition_mse, l2lq=l2lq, l2q=l2q)
 
 class TestService:
-    def __init__(self, model: nn.Module, dataloader: torch.utils.data.DataLoader):
+    def __init__(self, model: nn.Module, dataloader: torch.utils.data.DataLoader, representation_config: RotationMatrixConfig | QueternionConfig):
         self.model: nn.Module = model
         self.dataloader: torch.utils.data.DataLoader = dataloader
         self.test_history: list[TestResult] = []
+        self.representation_config = representation_config
 
     def run_test(self, disable_joints = []):
         results = []
@@ -59,7 +61,7 @@ class TestService:
     def run_test_for_given_data(self, actual, expected, mu, logvar, disable_joints = []):
         _, loss_details = vae_loss(actual, expected, mu, logvar)
         poss_loss = get_position_metrics(actual, expected, disable_joints)
-        l2lq, l2q = get_rotation_metrics(actual, expected, disable_joints)
+        l2lq, l2q = self.get_rotation_metrics(actual, expected, disable_joints)
         return TestResult(loss=loss_details,
                           poss_mse=poss_loss,
                           l2lq=l2lq,
@@ -71,5 +73,13 @@ class TestService:
     
     def is_last_test_improve_result(self, skip_epoch = 1) -> bool:
         return self.get_idx_of_last_best_result(skip_epoch) == len(self.test_history[::skip_epoch]) - 1
+    
+    def get_rotation_metrics(self, actual, expected, disable_joints):
+        if isinstance(self.representation_config, RotationMatrixConfig):
+            return get_rotation_matrix_metrics(actual, expected, disable_joints)
+        elif isinstance(self.representation_config, QueternionConfig):
+            return get_quternion_metrics(actual, expected, disable_joints)
+        else:
+            raise ValueError("Unknown representation config")
     
     

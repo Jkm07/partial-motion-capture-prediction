@@ -15,7 +15,13 @@ def get_position_metrics(actual, expected, disable_joints: list[int]):
         else:
             return 0
     
-def get_rotation_metrics(actual, expected, disable_joints: list[int]):
+def get_rotation_matrix_metrics(actual, expected, disable_joints: list[int]):
+    selected_nodes = select_nodes_to_rotation_evaluate(disable_joints)
+    l2lq = get_l2lq_from_rotation(actual, expected, selected_nodes)
+    l2q = get_l2q_from_rotation(actual, expected, selected_nodes)
+    return l2lq, l2q
+
+def get_quternion_metrics(actual, expected, disable_joints: list[int]):
     selected_nodes = select_nodes_to_rotation_evaluate(disable_joints)
     l2lq = get_l2lq_from_quternions(actual, expected, selected_nodes)
     l2q = get_l2q_from_quternion(actual, expected, selected_nodes)
@@ -44,28 +50,33 @@ def get_l2lq_from_rotation(actual, expected, selected_nodes: slice):
     return nn.MSELoss()(actual_rot_quat, expected_rot_quat).cpu().numpy()
 
 def get_l2q_from_quternion(actual, expected, selected_nodes: slice):
-    actual = prepare_data_for_l2q_quat(actual[selected_nodes])
-    expected = prepare_data_for_l2q_quat(expected[selected_nodes])
+    actual = prepare_data_for_l2q_quat(actual)[selected_nodes]
+    expected = prepare_data_for_l2q_quat(expected)[selected_nodes]
     return nn.MSELoss()(actual, expected).cpu().numpy()
 
 def get_l2q_from_rotation(actual, expected, selected_nodes: slice):
-    actual = prepare_data_for_l2q(actual[selected_nodes])
-    expected = prepare_data_for_l2q(expected[selected_nodes])
+    actual = prepare_data_for_l2q(actual)[selected_nodes]
+    expected = prepare_data_for_l2q(expected)[selected_nodes]
     return nn.MSELoss()(actual, expected).cpu().numpy()
 
 def prepare_data_for_l2q(matrix):
     matrix = math_utils.matrix6D_to_9D_torch(matrix)
-    matrix = get_global_rotations(matrix, lambda x, y: x @ y)
+    matrix = get_global_rotations(matrix, lambda x, y: x @ y, torch.eye(3).cuda())
     return math_utils.matrix9D_to_quat_torch(matrix)
 
-def get_global_rotations(rotations, rotate_lambda):
+def prepare_data_for_l2q_quat(matrix):
+    matrix = math_utils.from_decompose_quternion(matrix)
+    matrix = get_global_rotations(matrix, math_utils.quaternion_multiply_torch, torch.tensor([1, 0, 0, 0]).cuda())
+    return matrix
+
+def get_global_rotations(rotations, rotate_lambda, init_rotation):
     hierarchy = get_default_hierarchy()
     rotations = rotations.clone()
-    rotate_node_with_childs(rotations, torch.tensor([1, 0, 0, 0]).cuda(), 0, hierarchy[0], rotate_lambda)
+    rotate_node_with_childs(rotations, init_rotation, 0, hierarchy[0], rotate_lambda)
     return rotations
 
 def rotate_node_with_childs(rotations: torch.Tensor, parent_rotation: torch.Tensor, curr_rot: int, curr_node: Node, rotate_lambda) -> torch.Tensor:
-    curr_rot_slice = (..., curr_rot, slice(None)) #diff between quat and rotation matrix
+    curr_rot_slice = (slice(None), slice(None), curr_rot, ...) #diff between quat and rotation matrix
     rotations[curr_rot_slice] = rotate_lambda(rotations[curr_rot_slice], parent_rotation)
     for child in curr_node.children:
         if child.type == 'End':
@@ -73,9 +84,6 @@ def rotate_node_with_childs(rotations: torch.Tensor, parent_rotation: torch.Tens
         curr_rot = rotate_node_with_childs(rotations, rotations[curr_rot_slice], curr_rot + 1, child, rotate_lambda)
     return curr_rot
 
-def prepare_data_for_l2q_quat(matrix):
-    matrix = math_utils.from_decompose_quternion(matrix)
-    matrix = get_global_rotations(matrix, math_utils.quaternion_multiply_torch)
-    return matrix
+
           
           

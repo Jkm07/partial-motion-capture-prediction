@@ -6,6 +6,7 @@ from packages.utils import wandb_utils
 from packages.utils.common import print_device_info
 from packages.test import test_service
 from packages.test.test_service import TestResult
+from packages.model.ModelConfig import get_config
 import torch
 import os
 import datetime
@@ -15,13 +16,14 @@ def run(arguments):
     vae = get_vae_model(arguments)
     optimizer = torch.optim.Adam(vae.parameters(), lr=arguments.learning_rate, weight_decay=1e-5)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.1)
+    representation_config = get_config(arguments)
 
-    train_data = get_amass_dataloader(arguments.train_dir, arguments.train_batch_size, arguments.sequence_length)
-    valid_data = get_amass_dataloader(arguments.valid_dir, arguments.valid_batch_size, arguments.sequence_length)
+    train_data = get_amass_dataloader(arguments.train_dir, arguments.train_batch_size, arguments.sequence_length, representation_config)
+    valid_data = get_amass_dataloader(arguments.valid_dir, arguments.valid_batch_size, arguments.sequence_length, representation_config)
 
     wandb_utils.init(arguments, vae)
 
-    test_service_instance = test_service.TestService(vae, valid_data)
+    test_service_instance = test_service.TestService(vae, valid_data, representation_config)
 
     for epoch in range(arguments.epoch):
         batch_losses = []
@@ -45,7 +47,7 @@ def run(arguments):
         valid_test, shouldStop = validation(vae, test_service_instance, epoch, arguments)
         wandb_utils.log(epoch, batch_losses, valid_test)
         
-        if epoch < 2:
+        if epoch < 1:
             scheduler.step()
         
         if shouldStop:

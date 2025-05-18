@@ -23,6 +23,6 @@ def get_train_arguments():
 
     parser.add_argument("--model_path", type=str, default="checkpoints/storage/model_work")
 
-    parser.add_argument("--data_representation", type=str, default="quternions")
+    parser.add_argument("--data_representation", type=str, default="rotation_matrix", choices=["quaternion", "rotation_matrix"],)
 
     return parser.parse_args()
