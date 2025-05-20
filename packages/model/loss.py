@@ -5,7 +5,7 @@ from packages.utils.slices import ROTATION_FLAT, POSITION_FLAT
 from packages.utils.subgroups import SUBGROUP_NODES
 from dataclasses import dataclass
 
-SMOOTH_WEIGHT = 1
+SMOOTH_WEIGHT = 0.05
 POS_WEIGHT = 0.01
 KLD_WEIGHT = 0.001
 
