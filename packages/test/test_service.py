@@ -15,6 +15,7 @@ class TestResult:
     poss_mse: float
     l2lq: float
     l2q: float
+    npss: tuple[float, float]
 
 def summaraize_test_result(results: list[TestResult]) -> TestResult:
     rotation_loss_list = [i.loss.rotation_loss for i in results]
@@ -34,7 +35,13 @@ def summaraize_test_result(results: list[TestResult]) -> TestResult:
     l2lq = np.mean([i.l2lq for i in results])
     l2q = np.mean([i.l2q for i in results])
 
-    return TestResult(loss = loss_detail, poss_mse=possition_mse, l2lq=l2lq, l2q=l2q)
+    npss_loss = np.concatenate([i.npss[0] for i in results], axis=0)
+    npss_weights = np.concatenate([i.npss[1] for i in results], axis=0)
+
+    npss_weights = npss_weights / np.sum(npss_weights)
+    npss_loss = np.mean(np.sum(npss_loss * npss_weights, axis=-1)) 
+
+    return TestResult(loss = loss_detail, poss_mse=possition_mse, l2lq=l2lq, l2q=l2q, npss=npss_loss)
 
 class TestService:
     def __init__(self, model: nn.Module, dataloader: torch.utils.data.DataLoader, representation_config: RotationMatrixConfig | QueternionConfig):
@@ -61,11 +68,12 @@ class TestService:
     def run_test_for_given_data(self, actual, expected, mu, logvar, disable_joints = []):
         _, loss_details = vae_loss(actual, expected, mu, logvar)
         poss_loss = get_position_metrics(actual, expected, disable_joints)
-        l2lq, l2q = self.get_rotation_metrics(actual, expected, disable_joints)
+        l2lq, l2q, npss = self.get_rotation_metrics(actual, expected, disable_joints)
         return TestResult(loss=loss_details,
                           poss_mse=poss_loss,
                           l2lq=l2lq,
-                          l2q=l2q)
+                          l2q=l2q,
+                          npss=npss)
     
     def get_idx_of_last_best_result(self, skip_epoch = 1) -> int:
         array_metric = np.array([m.loss.get_loss() for m in self.test_history])[::skip_epoch]

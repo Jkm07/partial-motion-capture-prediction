@@ -19,13 +19,15 @@ def get_rotation_matrix_metrics(actual, expected, disable_joints: list[int]):
     selected_nodes = select_nodes_to_rotation_evaluate(disable_joints)
     l2lq = get_l2lq_from_rotation(actual, expected, selected_nodes)
     l2q = get_l2q_from_rotation(actual, expected, selected_nodes)
-    return l2lq, l2q
+    npss = get_npss_loss_for_rotation(actual, expected, selected_nodes)
+    return l2lq, l2q, npss
 
 def get_quternion_metrics(actual, expected, disable_joints: list[int]):
     selected_nodes = select_nodes_to_rotation_evaluate(disable_joints)
     l2lq = get_l2lq_from_quternions(actual, expected, selected_nodes)
     l2q = get_l2q_from_quternion(actual, expected, selected_nodes)
-    return l2lq, l2q
+    npss = get_npss_loss_for_quternion(actual, expected, selected_nodes)
+    return l2lq, l2q, npss
 
 def select_nodes_to_rotation_evaluate(disable_joints: list[int]):
     disable_joints = [i for i in disable_joints if i != POSITION_NODE_IDX]
@@ -76,13 +78,51 @@ def get_global_rotations(rotations, rotate_lambda, init_rotation):
     return rotations
 
 def rotate_node_with_childs(rotations: torch.Tensor, parent_rotation: torch.Tensor, curr_rot: int, curr_node: Node, rotate_lambda) -> torch.Tensor:
-    curr_rot_slice = (slice(None), slice(None), curr_rot, ...) #diff between quat and rotation matrix
+    curr_rot_slice = (slice(None), slice(None), curr_rot, ...)
     rotations[curr_rot_slice] = rotate_lambda(rotations[curr_rot_slice], parent_rotation)
     for child in curr_node.children:
         if child.type == 'End':
             continue
         curr_rot = rotate_node_with_childs(rotations, rotations[curr_rot_slice], curr_rot + 1, child, rotate_lambda)
     return curr_rot
+
+def get_npss_loss_for_quternion(actual: torch.Tensor, expected: torch.Tensor, selected_nodes: slice):
+    actual = prepare_data_for_l2q_quat(actual)[selected_nodes]
+    expected = prepare_data_for_l2q_quat(expected)[selected_nodes]
+    return get_npss_loss_batch(actual, expected)
+
+def get_npss_loss_for_rotation(actual: torch.Tensor, expected: torch.Tensor, selected_nodes: slice):
+    actual = prepare_data_for_l2q(actual)[selected_nodes]
+    expected = prepare_data_for_l2q(expected)[selected_nodes]
+    return get_npss_loss_batch(actual, expected)
+
+def get_npss_loss_batch(gt_data: torch.Tensor, pred_data: torch.Tensor, eps=1e-8):
+    gt_data = gt_data.flatten(-2)
+    pred_data = pred_data.flatten(-2)
+
+    gt_fourier_coeffs = torch.real(torch.fft.fft(gt_data, dim=1))
+    pred_fourier_coeffs = torch.real(torch.fft.fft(pred_data, dim=1))
+
+    gt_power = torch.square(gt_fourier_coeffs)
+    pred_power = torch.square(pred_fourier_coeffs)
+
+    gt_total_power = torch.sum(gt_power, dim=-2)
+    pred_total_power = torch.sum(pred_power, dim=-2)
+
+    gt_total_power_tmp = gt_total_power.unsqueeze(1).clone()
+    gt_total_power_tmp[gt_total_power_tmp < eps] = float('inf')
+    pred_total_power_tmp = pred_total_power.unsqueeze(1).clone()
+    pred_total_power_tmp[pred_total_power_tmp < eps] = float('inf')
+
+    gt_norm_power = gt_power / gt_total_power_tmp
+    pred_norm_power = pred_power / pred_total_power_tmp
+
+    cdf_gt_power = torch.cumsum(gt_norm_power, dim=-2)
+    cdf_pred_power = torch.cumsum(pred_norm_power, dim=-2)
+
+    emd = torch.norm((cdf_pred_power - cdf_gt_power), p=1, dim=-2)
+
+    return emd.cpu().numpy(), gt_total_power.cpu().numpy()
 
 
           

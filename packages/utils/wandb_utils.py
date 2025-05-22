@@ -33,7 +33,9 @@ def log(epoch, train_loss_list, validation_result: TestResult):
         'val_kld_loss': validation_result.loss.kld,
         'val_poss_mse': validation_result.poss_mse,
         'val_l2lq': validation_result.l2lq,
-        'val_l2q': validation_result.l2q
+        'val_l2q': validation_result.l2q,
+        'val_npss_loss': validation_result.npss[0],
+        'val_npss_weight': validation_result.npss[1],
     })
 
 def log_train_loss_mid_epoch(loss: float, detail: LossDetails):
