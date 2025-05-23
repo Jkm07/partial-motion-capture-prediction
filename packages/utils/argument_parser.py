@@ -4,7 +4,7 @@ import argparse
 def get_train_arguments():
     parser = argparse.ArgumentParser(description="Train main model")
 
-    parser.add_argument("--epoch", type=int, default=200)
+    parser.add_argument("--epoch", type=int, default=5)
     parser.add_argument("--no_improvment_stop", type=int, default=3)
     parser.add_argument("--save_epoch_skip", type=int, default=1)
 
@@ -21,8 +21,10 @@ def get_train_arguments():
     parser.add_argument("--learning_rate", type=float, default=1e-3)
     parser.add_argument("--sequence_length", type=int, default=64)
 
-    parser.add_argument("--model_path", type=str, default="checkpoints/storage/model_work")
+    parser.add_argument("--model_path", type=str, default="checkpoints/storage/model_smooth_quat/model_smooth_quat")
 
-    parser.add_argument("--data_representation", type=str, default="rotation_matrix", choices=["quaternion", "rotation_matrix"],)
+    parser.add_argument("--data_representation", type=str, default="quaternion", choices=["quaternion", "rotation_matrix"],)
+
+    parser.add_argument("--test_start_node", type=int, default=-1)
 
     return parser.parse_args()

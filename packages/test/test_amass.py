@@ -12,16 +12,18 @@ from packages.model import ModelConfig
 
 @print_device_info
 def run(arguments):
-
     vae = load_model_to_eval(arguments)
     representation_config = ModelConfig.get_config(arguments)
     test_data = get_amass_dataloader(arguments.test_dir, arguments.test_batch_size, arguments.sequence_length, representation_config)
     test_service_instance = test_service.TestService(vae, test_data, representation_config)
+    start_node = arguments.test_start_node
 
-    test_result =  test_service_instance.run_test()
-    print(f"General Validation. Result: {test_result}")
+    if start_node < 0:
+        test_result =  test_service_instance.run_test()
+        print(f"General Validation. Result: {test_result}")
+        start_node = 0
 
-    for node_key in SUBGROUP_NODES.keys():
+    for node_key in SUBGROUP_NODES.keys()[start_node:]:
         test_service_instance = test_service.TestService(vae, test_data, representation_config)
         test_result =  test_service_instance.run_test([node_key])
 
