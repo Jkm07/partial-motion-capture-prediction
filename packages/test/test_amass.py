@@ -23,7 +23,7 @@ def run(arguments):
         print(f"General Validation. Result: {test_result}")
         start_node = 0
 
-    for node_key in SUBGROUP_NODES.keys()[start_node:]:
+    for node_key in list(SUBGROUP_NODES.keys())[start_node:]:
         test_service_instance = test_service.TestService(vae, test_data, representation_config)
         test_result =  test_service_instance.run_test([node_key])
 
