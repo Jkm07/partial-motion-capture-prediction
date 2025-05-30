@@ -1,11 +1,11 @@
 import torch
 import torch.nn.functional as F
-from packages.math.math_utils import matrix6D_to_9D_torch, from_decompose_quternion, quaternion_multiply_torch
+from packages.math.math_utils import matrix6D_to_9D_torch
 from packages.utils.slices import ROTATION_FLAT, POSITION_FLAT
 from packages.utils.subgroups import SUBGROUP_NODES
 from dataclasses import dataclass
 
-SMOOTH_WEIGHT = 1
+SMOOTH_WEIGHT = 0.05
 POS_WEIGHT = 0.01
 KLD_WEIGHT = 0.001
 
@@ -51,11 +51,7 @@ def rotation_smooth_loss(actual, expected):
     if actual.size()[-1] == 3 and actual.size()[-2] == 3:
         return F.l1_loss(_rotation_differ(actual), _rotation_differ(expected))
     else:
-        return F.l1_loss(_quaternion_differ(actual), _quaternion_differ(expected))
-    
-def _quaternion_differ(quaternion):
-    return quaternion_multiply_torch(from_decompose_quternion(quaternion[:, 1:, ...]), 
-                                     -from_decompose_quternion(quaternion[:, :-1, ...]))
+        return F.l1_loss(torch.diff(actual, dim=1), torch.diff(expected, dim=1))
 
 def _rotation_differ(matrix):
     return torch.matmul(matrix[:, 1:, ...], matrix[:, :-1, ...].transpose(-1, -2))
