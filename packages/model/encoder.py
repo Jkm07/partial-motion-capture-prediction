@@ -7,24 +7,24 @@ class Encoder(nn.Module):
 
         self.res_blocks = nn.ModuleList()
 
-        self.res_blocks.append(ResNet(in_channels, 32, adjacency_list))
-        self.res_blocks.append(ResNet(32, 32, adjacency_list, stride=2))
+        self.res_blocks.append(ResNet(in_channels, 192, adjacency_list))
+        self.res_blocks.append(ResNet(192, 192, adjacency_list, stride=2))
 
-        self.res_blocks.append(ResNet(32, 32, adjacency_list)) #mid_transfer
-        self.res_blocks.append(ResNet(32, 48, adjacency_list, stride=2))
+        self.res_blocks.append(ResNet(192, 192, adjacency_list)) #mid_transfer
+        self.res_blocks.append(ResNet(192, 288, adjacency_list, stride=2))
 
-        self.res_blocks.append(ResNet(48, 48, adjacency_list))
-        self.res_blocks.append(ResNet(48, 48, adjacency_list, stride=2))
+        self.res_blocks.append(ResNet(288, 288, adjacency_list))
+        self.res_blocks.append(ResNet(288, 288, adjacency_list, stride=2))
 
-        self.res_blocks.append(ResNet(48, 48, adjacency_list)) #mid_transfer
-        self.res_blocks.append(ResNet(48, 64, adjacency_list, stride=2))
+        self.res_blocks.append(ResNet(288, 288, adjacency_list)) #mid_transfer
+        self.res_blocks.append(ResNet(288, 384, adjacency_list, stride=2))
 
-        self.res_blocks.append(ResNet(64, 64, adjacency_list))
-        self.res_blocks.append(ResNet(64, 64, adjacency_list, stride=2))
+        self.res_blocks.append(ResNet(384, 384, adjacency_list))
+        self.res_blocks.append(ResNet(384, 384, adjacency_list, stride=2))
 
-        self.res_blocks.append(ResNet(64, 64, adjacency_list)) #mid_transfer
+        self.res_blocks.append(ResNet(384, 384, adjacency_list)) #mid_transfer
 
-        self.pooling = nn.MaxPool1d(kernel_size=16)
+        self.pooling = nn.MaxPool1d(kernel_size=96)
 
         self.fc_mu = nn.Linear(424, latent_dim)
         self.fc_logvar = nn.Linear(424, latent_dim)

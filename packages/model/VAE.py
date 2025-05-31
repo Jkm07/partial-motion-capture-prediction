@@ -50,4 +50,4 @@ def print_model_data(vae: VAE, input_size: int, sequence_length: int, adjacency_
         sequence_length, 
         len(adjacency_list), 
         input_size), 
-        dtypes=[torch.float64], device="cpu", depth=4)
+        dtypes=[torch.float64], device="cuda", depth=4)

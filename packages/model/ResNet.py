@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
+from .STGNN import STGNN
 from .STGCN import STGCN
 
 class ResNet(nn.Module):

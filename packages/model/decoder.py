@@ -15,24 +15,24 @@ class Decoder(nn.Module):
         self.fc = nn.Linear(latent_dim, 424)
         self.res_blocks = nn.ModuleList()
 
-        self.res_blocks.append(ResNet(self.first_node_size, 64, adjacency_list))
-        self.res_blocks.append(ResNet(128, 64, adjacency_list, stride=2, is_transpose=True))  #mid_transfer
+        self.res_blocks.append(ResNet(self.first_node_size, 384, adjacency_list))
+        self.res_blocks.append(ResNet(768, 384, adjacency_list, stride=2, is_transpose=True))  #mid_transfer
 
-        self.res_blocks.append(ResNet(64, 64, adjacency_list))
-        self.res_blocks.append(ResNet(64, 64, adjacency_list, stride=2, is_transpose=True))
+        self.res_blocks.append(ResNet(384, 384, adjacency_list))
+        self.res_blocks.append(ResNet(384, 384, adjacency_list, stride=2, is_transpose=True))
 
-        self.res_blocks.append(ResNet(64, 48, adjacency_list,))
-        self.res_blocks.append(ResNet(96, 48, adjacency_list, stride=2, is_transpose=True))  #mid_transfer
+        self.res_blocks.append(ResNet(384, 288, adjacency_list,))
+        self.res_blocks.append(ResNet(576, 288, adjacency_list, stride=2, is_transpose=True))  #mid_transfer
 
-        self.res_blocks.append(ResNet(48, 48, adjacency_list,))
-        self.res_blocks.append(ResNet(48, 48, adjacency_list, stride=2, is_transpose=True))
+        self.res_blocks.append(ResNet(288, 288, adjacency_list,))
+        self.res_blocks.append(ResNet(288, 288, adjacency_list, stride=2, is_transpose=True))
 
-        self.res_blocks.append(ResNet(48, 32, adjacency_list,))
-        self.res_blocks.append(ResNet(64, 32, adjacency_list, stride=2, is_transpose=True))  #mid_transfer
+        self.res_blocks.append(ResNet(288, 192, adjacency_list,))
+        self.res_blocks.append(ResNet(384, 192, adjacency_list, stride=2, is_transpose=True))  #mid_transfer
 
-        self.res_blocks.append(ResNet(32, 32, adjacency_list))
+        self.res_blocks.append(ResNet(192, 192, adjacency_list))
 
-        self.res_blocks.append(FinishModule(32, out_channels, adjacency_list))
+        self.res_blocks.append(FinishModule(192, out_channels, adjacency_list))
     
     def forward(self, x, mid_tensors):
         mid_tensor_iter = iter(mid_tensors[::-1])
